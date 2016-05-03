@@ -1,4 +1,4 @@
-# Natural Image Matting
+## Natural Image Matting
 
 It's an algorithm used to separate the background and foreground with a few scribbles as constriction.
 
@@ -10,9 +10,9 @@ The functions which act the calculation is from the library of openCV.
 
 Have fun! :)
 
-# Note 
+## Note 
 1.erode skip
 
-# Update Log
+## Update Log
 
 2nd May 2016: First version code. Still hard coded.  
