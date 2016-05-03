@@ -15,5 +15,6 @@ Have fun! :)
 
 ## Update Log
 02/05/2016: First version code. Still hard coded.
+
 02/05/2016: Code polished and not hard coded any more.
 
