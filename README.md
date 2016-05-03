@@ -14,5 +14,4 @@ Have fun! :)
 1.erode skip
 
 ## Update Log
-
-2nd May 2016: First version code. Still hard coded.  
+02/05/2016: First version code. Still hard coded.  
