@@ -6,7 +6,7 @@ The part of this code tries to realize this algorithm in iOS so we can learn whe
 
 The code is written by myself but the train of thought is derived from http://www.wisdom.weizmann.ac.il/~levina/papers/Matting-Levin-Lischinski-Weiss-CVPR06.pdf. 
 
-The functions which act the calculation is from the library of openCV, Eigen and suitesparse. 
+The functions which act the calculation are from the libraries of openCV, Eigen and Suitesparse. 
 
 ## Note 
 1. Skip erode.
