@@ -8,13 +8,20 @@ The code is written by myself but the train of thought is derived from http://ww
 
 The functions which act the calculation is from the library of openCV.
 
-Have fun! :)
-
 ## Note 
-1.erode skip
+1. Skip erode.
 
 ## Update Log
 02/05/2016: First version code. Still hard coded.
 
 02/05/2016: Code polished and not hard coded any more.
+
+## Demo
+input:
+
+![input] (https://raw.githubusercontent.com/ChaunceyKiwi/imageMatting/master/bmp/result/input.png)
+
+output:
+
+![output] (https://raw.githubusercontent.com/ChaunceyKiwi/imageMatting/master/bmp/result/output.png)
 
