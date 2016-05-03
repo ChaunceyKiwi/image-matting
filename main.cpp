@@ -4,10 +4,7 @@
 #include <vector>
 #include "./Eigen/SparseCore"
 #include "./Eigen/Core"
-#include "./Eigen/SparseCholesky"
 #include "./Eigen/Dense"
-#include "./Eigen/SparseQR"
-#include "./Eigen/IterativeLinearSolvers"
 #include <unistd.h>
 #include <fstream>
 
@@ -16,200 +13,202 @@ using namespace std;
 using namespace Eigen;
 
 #define epsilon 0.0000001
-typedef Eigen::SparseMatrix<double> SpMat;
-typedef Eigen::Triplet<double> T;
-std::vector<T> tripletList;
+#define thresholdForScribble 0.001
+#define originalImageName "./bmp/pic.bmp"
+#define scribbledImageName "./bmp/pic_m.bmp"
 
-Mat Matting(Mat input, Mat input_m);
+typedef SparseMatrix<double> SpMat;
+typedef Triplet<double> T;
+
+int win_size = 1; // Distance between center to border
+int neb_size = (win_size * 2 + 1) * (win_size * 2 + 1); // Size of window
+int lambda = 100; // Weight of scribbled piexel obedience
+int beforeOrAfterCalculation = 0; // Used for swithing mode, 0 means before
+
+Mat Matting(Mat input, Mat input_m, int ForB);
 Mat GetAlpha(Mat input, Mat consts_map, Mat consts_vals);
+void getAlphaFromTxt(double* alpha);
 SpMat GetLaplacian(Mat input, Mat consts_map);
+void exportDataToTxtFile(SpMat left, VectorXd right);
 
-int main( int argc, char** argv )
-{
+int main(int argc, char** argv){
     // Read the file
     Mat img, img_m;
-    char* img_name = "./pic.bmp";
-    char* img_m_name = "./pic_m.bmp";
+    string img_name = originalImageName;
+    string img_m_name = scribbledImageName;
     img = imread(img_name, CV_LOAD_IMAGE_COLOR);
     img_m = imread(img_m_name, CV_LOAD_IMAGE_COLOR);
-    Mat imgOutput = Matting(img,img_m);
+    Mat imgOutputF = Matting(img, img_m, 0);
+    Mat imgOutputB = Matting(img, img_m, 1);
 
-    // Create a window for display.
-    namedWindow( "Display window", WINDOW_AUTOSIZE );
+    namedWindow("FrontObject", WINDOW_AUTOSIZE); // Create a window for display.
+    imshow("FrontObject", imgOutputF); // Show our image inside it.
+    namedWindow("Background", WINDOW_AUTOSIZE); // Create a window for display.
+    imshow("Background", imgOutputB); // Show our image inside it.
 
-    // Show our image inside it.
-    imshow( "Display window", imgOutput );
+    waitKey(0); // Wait for a keystroke in the window
 
-    // Wait for a keystroke in the window
-    waitKey(0);
     return 0;
 }
 
-Mat Matting(Mat input, Mat input_m){
-    int win_size = 1;
-    int h = 189,w = 235;
+Mat Matting(Mat input, Mat input_m ,int ForB){
+    Mat temp; // The difference between origin image and scribbled image
+    Mat consts_map; // 0-1 values where 1 means pixel scribbled
+    Mat consts_vals; // The original value of scribbled pixel
+    Mat finalImage; // return image after matting
 
-    Mat temp,chSum,consts_map,consts_vals,finalImage,consts_map_sub;
+    // Get the height and width of image
+    int h = input.size().height;
+    int w = input.size().width;
 
+    // Find the scribbled pixels
     temp = abs(input - input_m);
-
     Mat ch1, ch2, ch3;
     Mat ch1_f, ch2_f, ch3_f;
-
     vector<Mat> channels(3),channelsFinal(3);
     split(temp, channels);
     split(input_m,channelsFinal);
     ch1 = channels[0];
     ch2 = channels[1];
     ch3 = channels[2];
-
     ch1_f = channelsFinal[0];
     ch2_f = channelsFinal[1];
     ch3_f = channelsFinal[2];
-
-    //get the position where image is scribbled
-    consts_map = (ch1 + ch2 +ch3) > 0.001;
-
+    consts_map = (ch1 + ch2 +ch3) > thresholdForScribble; //get scribbled pixels
     split(input,channels);
     ch1 = channels[0];
     ch2 = channels[1];
     ch3 = channels[2];
-
     ch1_f = ch1_f.mul(consts_map);
     ch2_f = ch2_f.mul(consts_map);
     ch3_f = ch3_f.mul(consts_map);
     consts_map = consts_map/255;
     consts_vals = ch1_f/255;
 
+    // Function to get Alpha by natural matting
     Mat alpha = GetAlpha(input, consts_map, consts_vals);
+    if(ForB == 1)
+      alpha = 1 - alpha;
 
+    // Apply alpha to image to get image
     for(int i = 0;i < h;i++)
         for(int j = 0; j < w;j++)
         {
-            ch1.at<uchar>(i,j) = (uchar)((int)ch1.at<uchar>(i,j) * alpha.at<double>(i,j));
-            ch2.at<uchar>(i,j) = (uchar)((int)ch2.at<uchar>(i,j) * alpha.at<double>(i,j));
-            ch3.at<uchar>(i,j) = (uchar)((int)ch3.at<uchar>(i,j) * alpha.at<double>(i,j));
+          ch1.at<uchar>(i,j) = (uchar)((int)ch1.at<uchar>(i,j) * alpha.at<double>(i,j));
+          ch2.at<uchar>(i,j) = (uchar)((int)ch2.at<uchar>(i,j) * alpha.at<double>(i,j));
+          ch3.at<uchar>(i,j) = (uchar)((int)ch3.at<uchar>(i,j) * alpha.at<double>(i,j));
         }
 
     //combine 3 channels to 1 matrix
     merge(channels,finalImage);
-
     return finalImage;
 }
 
+// Function to get Alpha by natural matting
 Mat GetAlpha(Mat input, Mat consts_map, Mat consts_vals){
-  Mat temp = cv::Mat::ones(189, 235, CV_64F);
-  cv::Size s = input.size();
-  int h = s.height;
-  int w = s.width;
-  int img_size = w * h;
-  int lambda = 100;
+  Mat alpha;
+  int img_size = input.size().height * input.size().width;
 
+  // Solve the equation x = (A + lambda*D) \ (lambda * consts_vals(:));
+  // To make it clear, let left * x = right
+  // left =  A+lambda*D and right = lambda*consts_vals(:)
+
+  // Calculation of left side(A + lambda * D)
   SpMat A = GetLaplacian(input, consts_map);
   Mat consts_map_trans = consts_map.t();
-
   SpMat D(img_size,img_size);
   for(int i = 0; i < img_size; i++){
       D.coeffRef(i,i) = (int)consts_map_trans.at<char>(0, i);
   }
-
-    //x = (A+lambda*D)\(lambda*consts_vals(:));
-
   SpMat left = A + lambda * D;
 
-  cv::Mat consts_vals_in_a_col;
-  cv::Mat transpo;
-  transpo = consts_vals.t();
+  // Calculation of right side((lambda * consts_vals(:))
+  Mat consts_vals_in_a_col;
+  Mat transpo = consts_vals.t();
   consts_vals_in_a_col = transpo.reshape(1,img_size);
-
-  Eigen::VectorXd right(img_size);
+  VectorXd right(img_size);
   for(int i = 0;i < img_size;i++){
       right(i) = lambda * consts_vals_in_a_col.at<char>(i,0);
   }
 
-  int* innerPointer = left.innerIndexPtr();
-  int* outerPointer = left.outerIndexPtr();
-  double* valuePointer = left.valuePtr();
-
-  ofstream myfile1, myfile2, myfile3,myfile4;
-  myfile1.open ("inner.txt");
-
-  for(int i = 0; i < left.nonZeros(); i++){
-    myfile1<<innerPointer[i]<<endl;
+  // Currently unable to configure umfpack library, so export data now
+  if(beforeOrAfterCalculation == 0){
+    exportDataToTxtFile(left,right);
+    alpha = Mat::ones(input.size().height, input.size().width, CV_64F);
   }
 
-  myfile2.open ("outer.txt");
+  // Get value of alpha from .txt file
+  if(beforeOrAfterCalculation == 1){
+    double alphaArray[img_size];
+    getAlphaFromTxt(alphaArray);
 
-  for(int i = 0; i <= left.outerSize(); i++){
-    myfile2<<outerPointer[i]<<endl;
+    // Currently unable to perform such a calculation, set all as 1 temporarily.
+    // alpha = left \ right (need reshape to image size)
+    alpha = Mat::zeros(input.size().height, input.size().width, CV_64F);
+
+    int count = 0;
+    for (int i = 0; i < input.size().width;i++)
+      for (int j = 0; j < input.size().height;j++){
+              alpha.at<double>(j, i) = alphaArray[count++];
+              if(alpha.at<double>(j, i) > 1)
+                alpha.at<double>(j, i) = 1;
+              else if (alpha.at<double>(j, i) < 0)
+                alpha.at<double>(j, i) = 0;
+    }
   }
 
-  myfile3.open ("value.txt");
-
-  for(int i = 0; i < left.nonZeros(); i++){
-    myfile3<<valuePointer[i]<<endl;
-  }
-
-  myfile4.open ("B.txt");
-
-  for(int i = 0;i < img_size;i++){
-      myfile4<<right(i)<<endl;
-  }
-
-  myfile1.close();
-  myfile2.close();
-  myfile3.close();
-  myfile4.close();
-
-  return temp;
+  return alpha;
 }
 
 // Funtion used to get the value of matting laplacian
-SpMat GetLaplacian(Mat input, Mat consts_map)
-{
-    int win_size = 1,m,n,i,j,len;
-    cv::Mat temp,consts_map_sub,row_inds,col_inds,vals,win_inds,col_sum,winI;
-    cv::Mat repe_col;
-    cv::Mat repe_row;
+// Annotation unfinished for this function
+SpMat GetLaplacian(Mat input, Mat consts_map){
+    int len(0);
+    vector<T> tripletList;
+
+    // Annotation later
+    Mat consts_map_sub;
+    Mat row_inds;
+    Mat col_inds;
+    Mat vals;
+    Mat win_inds;
+    Mat col_sum;
+    Mat winI;
+    Mat repe_col;
+    Mat repe_row;
 
     //neb_size as the windows size (win_size is just the distance between center to border)
     int neb_size = (win_size * 2 + 1) * (win_size * 2 + 1);
-
-    cv::Size s = input.size();
-    int h = s.height;
-    int w = s.width;
-    int channel = input.channels();
-
-    n = h; m = w;
+    int h = input.size().height;
+    int w = input.size().width;
     int img_size = w * h;
-    double tlen;
+    double tlen = ((h - 2 * win_size) * (w - 2 * win_size) - \
+    sum(consts_map_sub)[0]) * neb_size * neb_size;
 
-    cv::Mat indsM = cv::Mat::zeros(h, w, CV_32S);
-
-    for(i = 0; i <= w -1 ;i++)
-        for(j = 0; j <= h - 1; j++){
+    Mat indsM = Mat::zeros(h, w, CV_32S);
+    for(int i = 0; i <= w -1 ;i++)
+        for(int j = 0; j <= h - 1; j++){
             indsM.at<int>(j, i) = 189 * i + j + 1;
-        }
+    }
 
-    consts_map_sub = consts_map.rowRange(win_size, h - (win_size+1)).colRange(win_size, w - (win_size+1));
+    consts_map_sub = consts_map.rowRange(win_size, \
+      h - (win_size+1)).colRange(win_size, w - (win_size+1));
 
-    tlen = ((h - 2 * win_size) * (w - 2 * win_size) - cv::sum(consts_map_sub)[0]) * neb_size * neb_size;
+    row_inds = Mat::zeros(tlen, 1, CV_32S);
+    col_inds = Mat::zeros(tlen, 1, CV_32S);
+    vals     = Mat::zeros(tlen, 1, CV_64F);
 
-    row_inds = cv::Mat::zeros(tlen, 1, CV_32S);
-    col_inds = cv::Mat::zeros(tlen, 1, CV_32S);
-    vals     = cv::Mat::zeros(tlen, 1, CV_64F);
-    len      = 0;
-
-    for (j = win_size;j <= w - win_size - 1;j++)
-        for (i = win_size;i <= h - win_size - 1;i++){
+    for (int j = win_size;j <= w - win_size - 1;j++)
+        for (int i = win_size;i <= h - win_size - 1;i++){
             if ((int)consts_map.at<char>(i,j) == 1){
                 continue;
             }
 
             //all elements in the window whose center is (i,j) and add their index up to a line
-            win_inds = indsM.rowRange(i - win_size,i + win_size + 1).colRange(j - win_size, j + win_size + 1);
+            win_inds = indsM.rowRange(i - win_size,i + win_size + 1)\
+            .colRange(j - win_size, j + win_size + 1);
 
-            cv::Mat col_sum  = cv::Mat::zeros(1,9,CV_64F);
+            Mat col_sum  = Mat::zeros(1,9,CV_64F);
 
             col_sum.at<double>(0,0) = double(win_inds.at<int>(0,0));
             col_sum.at<double>(0,1) = double(win_inds.at<int>(1,0));
@@ -224,15 +223,16 @@ SpMat GetLaplacian(Mat input, Mat consts_map)
             win_inds = col_sum;
 
             //all elements in the window whose center is (i,j) and add their color up to a line
-            winI = input.rowRange(i - win_size,i + win_size + 1).colRange(j - win_size, j + win_size + 1);
+            winI = input.rowRange(i - win_size,i + win_size + 1)\
+            .colRange(j - win_size, j + win_size + 1);
 
-            cv::Mat winI_temp  = cv::Mat::zeros(9,3,CV_64F);
+            Mat winI_temp  = Mat::zeros(9,3,CV_64F);
 
-            vector<cv::Mat> channels(3);
+            vector<Mat> channels(3);
             split(winI, channels);
-            cv::Mat ch1 = channels[0];
-            cv::Mat ch2 = channels[1];
-            cv::Mat ch3 = channels[2];
+            Mat ch1 = channels[0];
+            Mat ch2 = channels[1];
+            Mat ch3 = channels[2];
 
             winI_temp.at<double>(0,0) = ch1.at<uchar>(0,0);
             winI_temp.at<double>(1,0) = ch1.at<uchar>(1,0);
@@ -268,7 +268,7 @@ SpMat GetLaplacian(Mat input, Mat consts_map)
             winI = winI_temp/255;
 
             //get the mean value of matrix
-            cv::Mat win_mu = cv::Mat::zeros(3,1,CV_64F);
+            Mat win_mu = Mat::zeros(3,1,CV_64F);
 
             double sum1 = 0;
             double sum2 = 0;
@@ -280,30 +280,23 @@ SpMat GetLaplacian(Mat input, Mat consts_map)
                 sum3 += winI.at<double>(i,2);
             }
 
-
             win_mu.at<double>(0,0) = sum1/9;
             win_mu.at<double>(1,0) = sum2/9;
             win_mu.at<double>(2,0) = sum3/9;
 
             //get the variance value of matrix
-            cv::Mat win_mu_squ = win_mu.t();
-
-            cv::Mat multi = win_mu * win_mu_squ;
-
-            cv::Mat multi2 = winI.t() * winI / neb_size;
-            cv::Mat eye_c = cv::Mat::eye(channel,channel,CV_64F);
-            cv::Mat before_inv = multi2 - multi + epsilon/neb_size * eye_c;
-
-            cv::Mat win_var = before_inv.inv();
-
+            Mat win_mu_squ = win_mu.t();
+            Mat multi = win_mu * win_mu_squ;
+            Mat multi2 = winI.t() * winI / neb_size;
+            Mat eye_c = Mat::eye(input.channels(), input.channels(), CV_64F);
+            Mat before_inv = multi2 - multi + epsilon/neb_size * eye_c;
+            Mat win_var = before_inv.inv();
             winI = winI - repeat(win_mu_squ, neb_size, 1);
-            cv::Mat tvals = (1 + winI * win_var * winI.t())/neb_size;
-
-            tvals = tvals.reshape(0,neb_size*neb_size);
-
-            repe_col = repeat(win_inds.t(),1,neb_size).reshape(0, neb_size*neb_size);
-            repe_row = repeat(win_inds,neb_size,1).reshape(0, neb_size*neb_size);
-            cv::Mat putInRow = tvals.reshape(0,neb_size*neb_size);
+            Mat tvals = (1 + winI * win_var * winI.t()) / neb_size;
+            tvals = tvals.reshape(0,neb_size * neb_size);
+            repe_col = repeat(win_inds.t(),1,neb_size).reshape(0, neb_size * neb_size);
+            repe_row = repeat(win_inds,neb_size,1).reshape(0, neb_size * neb_size);
+            Mat putInRow = tvals.reshape(0,neb_size * neb_size);
 
             for(int i = len;i <= neb_size*neb_size + len - 1;i++){
                 row_inds.at<int>(i,0) = repe_row.at<double>(i - len,0);
@@ -311,7 +304,7 @@ SpMat GetLaplacian(Mat input, Mat consts_map)
                 vals.at<double>(i,0) = tvals.at<double>(i - len,0);
             }
 
-            len=len+neb_size*neb_size;
+            len = len + neb_size * neb_size;
         }
 
     SpMat A(img_size,img_size);
@@ -323,13 +316,12 @@ SpMat GetLaplacian(Mat input, Mat consts_map)
 
     tripletList.reserve(len);
     for(int i = 0;i < len ;i++){
-        tripletList.push_back(T(row_inds.at<int>(i,0)-1,col_inds.at<int>(i,0)-1,vals.at<double>(i,0)));
+        tripletList.push_back(T(row_inds.at<int>(i, 0) - 1, \
+        col_inds.at<int>(i, 0) - 1,vals.at<double>(i, 0)));
     }
 
     A.setFromTriplets(tripletList.begin(), tripletList.end());
-
     SpMat sumA = A * matrixOfOne;
-
     SpMat sparse_mat(img_size,img_size);
 
     for(int i = 0; i < img_size; i++){
@@ -339,4 +331,47 @@ SpMat GetLaplacian(Mat input, Mat consts_map)
     A = sparse_mat - A;
 
     return A;
+}
+
+// Currently unable to configure umfpack library, so export data now
+void exportDataToTxtFile(SpMat left, VectorXd right){
+  int* innerPointer = left.innerIndexPtr();
+  int* outerPointer = left.outerIndexPtr();
+  double* valuePointer = left.valuePtr();
+
+  ofstream myfile;
+  myfile.open ("./data/inner.txt");
+  for(int i = 0; i < left.nonZeros(); i++)
+    myfile<<innerPointer[i]<<endl;
+  myfile.close();
+
+  myfile.open ("./data/outer.txt");
+  for(int i = 0; i <= left.outerSize(); i++)
+    myfile<<outerPointer[i]<<endl;
+  myfile.close();
+
+  myfile.open ("./data/value.txt");
+  for(int i = 0; i < left.nonZeros(); i++)
+    myfile<<valuePointer[i]<<endl;
+  myfile.close();
+
+  myfile.open ("./data/B.txt");
+  for(int i = 0;i < left.outerSize(); i++)
+      myfile<<right(i)<<endl;
+  myfile.close();
+
+  cout<<"Data has been exported to ./data"<<endl;
+}
+
+void getAlphaFromTxt(double* alpha){
+    ifstream myfile ("./data/alpha.txt");
+    string line;
+    int count = 0;
+
+    if (myfile.is_open()){
+        while (getline (myfile,line)){
+            alpha[count++] = stof(line);
+        }
+        myfile.close();
+    }
 }
