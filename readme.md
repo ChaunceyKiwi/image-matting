@@ -17,11 +17,9 @@ The functions which act the calculation are from the libraries of openCV, Eigen 
 02/05/2016: Code polished and not hard coded any more.
 
 ## Demo
-input:
+### input:
+![input](./bmp/result/input.png)
 
-![input] (https://raw.githubusercontent.com/ChaunceyKiwi/imageMatting/master/bmp/result/input.png)
-
-output:
-
-![output] (https://raw.githubusercontent.com/ChaunceyKiwi/imageMatting/master/bmp/result/output.png)
+### output:
+![output](./bmp/result/output.png)
 
