@@ -24,7 +24,7 @@ The functions acting the calculation are from the libraries of openCV, Eigen and
 ![output](./bmp/result/output.png)
 
 ### Other output:
-![output1](./bmp/result/kid_output.png)
+![output1](./bmp/result/kid_output.jpg)
 
 ### Other output:
-![output1](./bmp/result/peacock_output.png)
+![output1](./bmp/result/peacock_output.jpg)
