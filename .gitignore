@@ -1,2 +1,16 @@
 # Ignore Mac DS_Store files
 .DS_Store
+
+*.log
+
+*.out
+
+*.fls
+
+*.pdf
+
+*.aux
+
+*.fdb_latexmk
+
+*.gz

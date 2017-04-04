@@ -1,0 +1,298 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[letterpaper]{geometry}
+\usepackage{acl2012}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\setlength{\parindent}{0in}
+\tikzstyle{obj}=[draw, minimum size=2em]
+\makeatletter
+\newcommand{\@BIBLABEL}{\@emptybiblabel}
+\newcommand{\@emptybiblabel}[1]{}
+\makeatother
+\usepackage[hidelinks]{hyperref}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\setlength\titlebox{6.5cm} 
+\geometry{
+a4paper,
+total={210mm,297mm},
+left=15mm,
+right=15mm,
+top=20mm,
+bottom=20mm,
+}
+
+\title{User-constrained Natural Image Matting}
+\author{Chengxian Liu, Qiao Chen\\
+  School of Computing Science \\ Simon Fraser University \\
+  {\tt \{cla284, qiaoc\}@sfu.ca}  
+}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+In this project, we tried to examine the theoretical basis of A Closed Form Solution to Natural Image Matting. ~\cite{Levin:2006}
+
+We provided proof to the derivation of the paper’s mathematical model, which was not thoroughly explained. We also implemented the core functions of the paper and pointed out some possibly futural work.
+\end{abstract}
+
+\section{Introduction}
+A natural image can be constituted by foreground and background. In mathematical representation, a 2D image I can be regarded as the composite of a foreground image F and a background image B:
+$$I_{i} = \alpha_{i}F_{i} + (1-\alpha_{i})B_{i}$$
+Where $\alpha$, or $\alpha$ matte, represents the opacity of the foreground image. For pixels on the foreground object, the α value equals to 1. For pixels on the background object, the α value equals 0. Image matting problem is the problem of finding the optimal α matte.\\\\
+Image matting is an under-constrained problem. Take Rubin’s vase (Figure 1) as an example. There are two possible interpretations of the image. The white part of the image can be considered both as the foreground(vase) or background(the wall behind two opposite profiles.)
+
+% \includegraphics[width=3cm]{pic1.png} 
+
+\subsection{Motivation}
+
+
+\subsection{Related work}
+
+\section{Approach}
+\subsection{Greyscale Image}
+In the paper, Levin assumes that foreground image and background image are steady inside small local windows (3x3 in his case). Therefore she gives the following mathematical assumption:
+$$I_i = \alpha_i F_i + (1 - \alpha_i)B_i$$
+$$\Rightarrow \alpha \approx aI_{i} + b, \forall i \in w $$
+$$a = \frac{1}{F-B}, b = \frac{-B}{F-B} $$
+Levin also defines the cost function J given α, a, b. Intuitively, the cost function measures the error of the above approximation of α. The bias term $\varepsilon$ is used for numerical stability.
+$$J(\alpha, a, b) = \sum_{j \in I}(\sum_{i \in w_j}(\alpha_i - a_jI_i-b_j)^2+\varepsilon a_j^2)$$
+
+The goal of this paper is to find the optimal $(\alpha, a, b)$ to minimize the cost function J.\\
+
+Theorem1: Define $J(\alpha)$ as 
+$$J(\alpha) = \min_{a,b} J(\alpha, a, b)$$
+Then
+$$J(\alpha) = \alpha^T L \alpha$$
+where L is an $N * N$ matrix, whose (i, j)-th entry is:
+$$\sum_{k|(i, j) \in w_k}(\delta_{ij} - \frac{1}{|w_k|}(1+\frac{1}{\frac{\varepsilon}{|w_k|} + \sigma_k^2}(I_i - \mu_k)(I_j - \mu_k)))$$
+Here $\delta_{ij}$ is the Kronecker delta, $\mu_k$ is the mean of the intensities in the window $w_k$  nearby k, $\sigma_k^2$ is the variance of the intensities in the window $w_k$  nearby k, and $|w_k|$ is the number of pixels in the current window. \\
+
+Proof of Theorem1:\\
+
+Use $G_k$ and $\bar{\alpha_k}$  to denote $J(\alpha)$, where
+$$ G_k^T=
+  \begin{bmatrix}
+    I_1 & I_2 & I_3 & ... & I_{w_k} & \sqrt{\varepsilon}\\
+    1 & 1 & 1 & ... & 1 & 0 
+  \end{bmatrix} $$
+$$ \bar{\alpha_k}^T=
+  \begin{bmatrix}
+    \alpha_1 & \alpha_2 & \alpha_3 & ... & \alpha_{w_k} & 0 
+  \end{bmatrix} $$
+$$J(\alpha, a, b) = \sum_{k}||G_k \begin{bmatrix} a_k \\ b_k\end{bmatrix} - \bar{\alpha_k}||^2$$
+$$\Rightarrow \sum_k||\begin{bmatrix} I_{1} a_k + b_k \\ I_{2} a_k + b_k \\ \vdots \\ I_{|w_k|} a_k + b_k \\ \sqrt{\varepsilon} a_k \end{bmatrix} - 
+\begin{bmatrix}
+    \alpha_1 \\ \alpha_2 \\ \alpha_3 \\ \vdots\\ \alpha_{w_k} \\ 0 
+\end{bmatrix}||^2$$
+$$\Rightarrow \sum_{k}(\sum_{i = 1}^{|w_{k}|}(\alpha_k - a_kI_i-b_k)^2+\varepsilon a_k^2)$$
+Meanwhile 
+$$J(\alpha, a, b) = \sum_{j \in I}(\sum_{i \in w_j}(\alpha_i - a_jI_i-b_j)^2+\varepsilon a_j^2)$$
+Thus
+$$J(\alpha, a, b) = \sum_{k}||G_k \begin{bmatrix} a_k \\ b_k\end{bmatrix} - \bar{\alpha_k}||^2$$
+After rewriting $J(\alpha)$, for each window we try to find the $(a_k^*, b_k^*)$ that minimizes $J(\alpha)$, given a specific $\alpha$. Using the solution to the least quares problem we can get:
+
+$$(a_k^*, b_k^*) = argmin||G_k \begin{bmatrix} a_k \\ b_k\end{bmatrix} \bar{\alpha_k}||$$
+$$ = (G_k^TG_k)^{-1}G_k^T \bar{\alpha_k}$$
+
+Substituting this solution back, we get
+$$J(\alpha, a, b) = \sum_{k}||G_k \begin{bmatrix} a_k \\ b_k\end{bmatrix} - \bar{\alpha_k}||^2 $$
+$$= \sum_{k}||G_k(G_k^TG_k)^{-1}G_k^T \bar{\alpha_k} - \bar{\alpha_k}||^2$$
+
+Let $\bar{G_k} = I - G_k(G_k^T G_k)^{-1}G_k^T$, we get
+$$\sum_{k}||G_k(G_k^TG_k)^{-1}G_k^T \bar{\alpha_k} - \bar{\alpha_k}||^2$$
+$$ = \sum_{k}|| (I - \bar{G_k})\bar{\alpha_k} - \bar{\alpha_k}||^2 $$
+$$ = \sum_{k}|| \bar{G_k}\bar{\alpha_k}||^2 = \sum_{k} (\bar{G_k}\bar{\alpha_k})^T \bar{G_k}\bar{\alpha_k} = \sum_{k} \bar{\alpha_k}^T\bar{G_k}^T \bar{G_k}\bar{\alpha_k}$$
+Thus we have
+$$J(\alpha) = \sum_{k} \bar{\alpha_k}^T\bar{G_k}^T \bar{G_k}\bar{\alpha_k}$$
+
+With following calculation we find out the value of $\bar{G_k}$: 
+$$G_k^TG_k = \begin{bmatrix}
+    I_1 & I_2 & I_3 & ... & I_{w_k} & \sqrt{\varepsilon}\\
+    1 & 1 & 1 & ... & 1 & 0 
+  \end{bmatrix}
+  \begin{bmatrix}
+    I_1 & 1 \\ I_2 & 1 \\ I_3 & 1 \\ \vdots & \vdots \\ I_{w_k} & 1 \\ \sqrt{\varepsilon} & 0 
+  \end{bmatrix} $$
+$$ = \begin{bmatrix}
+    \sum_{1}^{|w_k|} I_i^2 + \varepsilon & \sum I_i \\
+    \sum I_i & |w_k|
+  \end{bmatrix}$$
+
+With the formula to get the inverse of a 2 by 2 matrix, we can get: 
+$$(G_k^TG_k)^{-1} = \frac{\begin{bmatrix}
+    |w_k| & \sum -I_i \\
+    \sum -I_i & \sum_{1}^{|w_k|} I_i^2 + \varepsilon
+  \end{bmatrix}}{|w_k|(\sum_{1}^{|w_k|} I_i^2 + \varepsilon) - (\sum I_i)^2} 
+  $$
+
+$$G_k(G_k^TG_k)^{-1} = \frac{\begin{bmatrix}
+    I_1 & 1 \\ I_2 & 1 \\ \vdots & \vdots \\ I_{w_k} & 1 \\ \sqrt{\varepsilon} & 0 
+  \end{bmatrix} 
+  \begin{bmatrix}
+    |w_k| & \sum -I_i \\
+    \sum -I_i & \sum_{1}^{|w_k|} I_i^2 + \varepsilon
+  \end{bmatrix}}{|w_k|(\sum_{1}^{|w_k|} I_i^2 + \varepsilon) - (\sum I_i)^2} $$
+$$ = \frac{\begin{bmatrix}
+    I_1w_k - \sum I_i & -I_1 \sum I_i + \sum I_i^2 + \varepsilon \\
+    I_2w_k - \sum I_i & -I_2 \sum I_i + \sum I_i^2 + \varepsilon \\
+    \hdots & \hdots \\
+    I_{|w_k|}w_k - \sum I_i & -I_{|w_k|} \sum I_i + \sum I_i^2 + \varepsilon \\
+    \sqrt{\varepsilon}|w_k| & -\sqrt{\varepsilon}\sum I_i
+  \end{bmatrix}}{|w_k|(\sum_{1}^{|w_k|} I_i^2 + \varepsilon) - \sum I_i^2}$$
+
+$$G_k(G_k^TG_k)^{-1}G_k^T $$
+$$= G_k(G_k^TG_k)^{-1}
+  \begin{bmatrix}
+    I_1 & I_2 & I_3 & ... & I_{w_k} & \sqrt{\varepsilon}\\
+    1 & 1 & 1 & ... & 1 & 0 
+  \end{bmatrix} $$
+
+When $i \le p, j \le q$, we have 
+$$[G_k(G_k^TG_k)^{-1}G_k^T]_{i, j} $$
+$$ \frac{(I_i |w_k| - \sum I_i) * I_j - I_i \sum I_i + \sum I_i^2 + \varepsilon}{|w_k|(\sum_{1}^{|w_k|} I_i^2 + \varepsilon) - (\sum I_i)^2}$$
+$$= \frac{I_i I_j |w_k| - (I_j + I_i)\sum I_i + \sum I_i^2 + \varepsilon}{|w_k|(\sum_{1}^{|w_k|} I_i^2 + \varepsilon) - (\sum I_i)^2}$$
+
+Since $\mu_k$ and $\sigma_k^2$ are the mean and the variance of the intensities in the window $w_k$  nearby k, we have:
+$$\mu_k = \frac{1}{|w_k|}\sum I_i \Rightarrow \sum I_i = |w_k|\mu_k$$
+$$\sigma_k^2 = E(x^2) - E(x)^2 = \frac{1}{|w_k|}\sum I_i^2 - \mu_k^2 $$
+$$\Rightarrow \sum I_i^2 = (\sigma_k^2 + \mu_k^2)|w_k|$$
+
+Substituting the $\sum I_i^2$ and $\sum I_i$ with $\mu_k$ and $\sigma_k^2$, we get
+$[G_k(G_k^TG_k)^{-1}G_k^T]_{i, j}$
+$$= \frac{I_i I_j |w_k| - (I_j + I_i)|w_k|\mu_k + (\sigma_k^2 + \mu_k^2)|w_k| + \varepsilon}{(\sigma_k^2 + \mu_k^2)|w_k|^2 + \varepsilon|w_k| - |w_k|^2\mu_k^2} $$
+$$ = \frac{I_i I_j |w_k| - (I_j + I_i)|w_k|\mu_k + |w_k|\mu_k^2 + |w_k|\sigma_k^2 + \varepsilon}{\sigma_k^2|w_k|^2 + \varepsilon|w_k|}$$
+$$ = \frac{I_i I_j - (I_j + I_i)\mu_k + \mu_k^2}{\sigma_k^2|w_k| + \varepsilon} + 
+\frac{|w_k|\sigma_k^2 + \varepsilon}{\sigma_k^2|w_k|^2 + \varepsilon|w_k|}$$
+$$ = \frac{1}{|w_k|}(1 + \frac{I_i I_j - (I_j + I_i)\mu_k + \mu_k^2}{\sigma_k^2 + \frac{\varepsilon}{|w_k|}})$$
+$$= \frac{1}{|w_k|}(1 + \frac{(I_i - \mu_k)(I_j - \mu_k)}{\sigma_k^2 + \frac{\varepsilon}{|w_k|}})$$
+$$= \frac{1}{|w_k|}(1 + \frac{1}{\frac{\varepsilon}{|w_k|} + \sigma_k^2}(I_i - \mu_k)(I_j - \mu_k))$$
+
+Since $\bar{G_k} = I - G_k(G_k^TG_k)^{-1}G_k^T$, we have:
+$$[\bar{G_k}]_{i,j} = [I - G_k(G_k^TG_k)^{-1}G_k^T]_{i,j} $$
+$$= [I]_{i,j} - [G_k(G_k^TG_k)^{-1}G_k^T]_{i,j}$$
+$$= \delta_{ij} - \frac{1}{|w_k|}(1 + \frac{1}{\frac{\varepsilon}{|w_k|} + \sigma_k^2}(I_i - \mu_k)(I_j - \mu_k))$$
+
+Therefor, we can denote $J(\alpha) = \alpha^T L \alpha$, where $L = \bar{G_k}^T\bar{G_k}$ and $[\bar{G_k}]_{i,j} = \delta_{ij} - \frac{1}{|w_k|}(1 + \frac{1}{\frac{\varepsilon}{|w_k|} + \sigma_k^2}(I_i - \mu_k)(I_j - \mu_k)).$
+
+\subsection{Color Image}
+
+To prove that applies to the color images as well, Levin uses color line model ~\cite{Omer:2004} to represent the color image. 
+
+Color line model assumes that the foreground color and background color inside a small window is an interpolation of two color points, i.e.,
+$$F_i = \beta^F_{i} F_1 + (1-\beta^F_{i})F_2$$
+$$B_i = \beta^B_{i} B_1 + (1-\beta^B_{i})B_2$$
+Where $\beta_i$s are constant factors. $F_1$, $B_1$ and $F_2$, $B_2$ are the foreground color and background color of two different points.\\
+
+Using color line model, Levin claims that αi can be represented as:
+$$\alpha_i = \sum_{c}a^cI_i^c + b, \forall i \in w$$
+
+By which we can also derive $J(\alpha) = \alpha^T L \alpha$ using the similar derivation in 2.0. \\\\
+
+Proof:\\
+
+Substitude 
+$$F_i^c = \beta^F_{i} F_1^c + (1-\beta^F_{i})F_2^c$$
+$$B_i^c = \beta^B_{i} B_1^c + (1-\beta^B_{i})B_2^c$$
+into 
+$$I_i^c = \alpha_i F_i^c + (1-\alpha_i)B_i^c$$
+$$\Rightarrow I_i^c = \alpha_i (\beta^F_{i} F_1^c + (1-\beta^F_{i})F_2^c) + (1-\alpha_i)(\beta^B_{i} B_1^c + (1-\beta^B_{i})B_2^c)$$
+$$\Rightarrow I_i^c - B_2^c = \alpha_i (\beta^F_{i} F_1^c + (1-\beta^F_{i})F_2^c) + (1-\alpha_i)(\beta^B_{i} B_1^c + (1-\beta^B_{i})B_2^c) - B_2^c$$
+$$ = (F_2^c - B_2^c)\alpha_i + (F_1^c - F_2^c)\alpha_i \beta_i^F + (B_1^c - B_2^c)(1-\alpha_i)$$
+$$ \Rightarrow I_i^c - B_2^c = 
+  \begin{bmatrix}
+    F_2^c - B_2^c & F_1^c - F_2^c & B_1^c - B_2^c
+  \end{bmatrix}
+  \begin{bmatrix}
+    \alpha_i \\ \alpha_i \beta_i^F \\ (1-\alpha_i)\beta_i^B
+  \end{bmatrix} $$
+Let $$H = \begin{bmatrix}
+    F_2^R - B_2^R & F_1^R - F_2^R & B_1^R - B_2^R \\
+    F_2^G - B_2^G & F_1^G - F_2^G & B_1^G - B_2^G \\
+    F_2^B - B_2^B & F_1^B - F_2^B & B_1^B - B_2^B 
+  \end{bmatrix}$$
+Then from above we know:
+$$H\begin{bmatrix}
+    \alpha_i \\ \alpha_i \beta_i^F \\ (1-\alpha_i)\beta_i^B
+  \end{bmatrix} = 
+  \begin{bmatrix}
+    I_i^R \\ I_i^G \\ I_i^B
+  \end{bmatrix} - 
+  \begin{bmatrix}
+    B_2^R \\ B_2^G \\ B_2^B
+  \end{bmatrix}$$
+$$\Rightarrow \begin{bmatrix}
+    \alpha_i \\ \alpha_i \beta_i^F \\ (1-\alpha_i)\beta_i^B
+  \end{bmatrix} = H^{-1}(
+  \begin{bmatrix}
+    I_i^R \\ I_i^G \\ I_i^B
+  \end{bmatrix} - 
+  \begin{bmatrix}
+    B_2^R \\ B_2^G \\ B_2^B
+  \end{bmatrix})$$
+
+Denote $\begin{bmatrix} a^R & a^G & a^B \end{bmatrix}$ as the first row of $H^{-1}$, we have: 
+$$\Rightarrow \alpha_i = 
+(a^RI_i^R + a^GI_i^G + a^BI_i^B) $$
+$$-(a^RB_2^R + a^GB_2^G + a^BB_2^B)$$
+
+Let $b = a^RB_2^R + a^GB_2^G + a^BB_2^B$, we have:
+$$\alpha_i = \sum_{c}a^cI_i^c + b, \forall i \in w$$
+
+Similar to the cost function of gray­scale images, Levin defines the cost function as:
+$$J(\alpha, a, b) = \sum_{j \in I}(\sum_{i \in w_j}(\alpha_i - \sum_c a_j^c I_i^c-b_j)^2+\varepsilon \sum_{c}{a_j^c}^2)$$
+
+Using the same derivation process in 2.0, we can eliminate a and b in the above equation and get $J(\alpha) = \alpha^T L \alpha$ where L is an N by N matrix whose (i, j)-th element is:
+$$\sum_{k|(i,j) \in w_k} (\delta_{ij} - \frac{1}{|w_k|}(1 + (I_i - \mu_k)(\sum_k + \frac{\varepsilon}{|w_k|}I_3)^{-1}(I_j - \mu_k)))$$
+
+Where $\sum_k$ is a convariance matrix.
+\subsection{User Constraint}
+As mentioned in the introduction, user constrained is required to obtain a meaningful alpha matte. We allow users to indicate some background pixels($\alpha = 0$) and some foreground pixels($\alpha = 1$). With S as the user constraint, we solve for:
+$$\alpha = argmin(\alpha^T L \alpha), s.t.\alpha_i = S_i, \forall i \in S $$
+\section{Implementation}
+\begin{tikzpicture}[node distance=2cm,auto,>=latex']
+  \node [coordinate] (start) {};
+  \node [obj, below of = start, node distance=1.5cm] (imageReader) {ImageReader};
+  \node [obj, below of = imageReader] (mattingPerformer) {MattingPerformer};
+  \node [obj, below of  = mattingPerformer] (imagePrinter) {ImagePrinter};
+  \node [coordinate, below of = imagePrinter, node distance=1.5cm] (end){};
+  \node [obj, right of = mattingPerformer, node distance=5.5cm] (alphaCalculator) {AlphaCalculator};
+  \node [obj, above right of = alphaCalculator, node distance=3cm] (laplacianCalculator) {LaplacianCalculator};
+  \node [obj, below right of = alphaCalculator, node distance=3cm] (sparseMatrixSolver) {SparseMatrixSolver};
+
+  \path[->] (start) edge node {File path} (imageReader);
+  \path[->] (imageReader) edge node {Image matrix} (mattingPerformer);
+  \path[->] (alphaCalculator) edge node {Image matrix} (laplacianCalculator);
+  \path[->] (laplacianCalculator) edge node {Laplacian matrix} (alphaCalculator);
+  \path[->] (alphaCalculator) edge node {sparse matrix A, vector B} (sparseMatrixSolver);
+  \path[->] (sparseMatrixSolver) edge node {x = $A \backslash B$ } (alphaCalculator);
+  \path[->] (mattingPerformer) edge node {alpha} (alphaCalculator);
+  \path[->] (alphaCalculator) edge node {Image matrix} (mattingPerformer);
+  \path[->] (mattingPerformer) edge node {Matting image matrix} (imagePrinter);
+  \path[->] (imagePrinter) edge node {Window shows result} (end);
+\end{tikzpicture}
+\subsection{LaplacianCalculator}
+Used to calculate the value of laplacian matrix. 
+\subsection{SparseMatrixEquationSolver}
+Used to solved the equation of large scale sparse matrix.
+\subsection{AlphaCalculator}
+Alpha calculator will firstly use Laplacian calculator to get laplacian matrix. Then form the sparse matrix equation and use sparse matrix equation solver to solve it and get alpha.
+\subsection{MattingPerformer}
+Use alpha calculator to get alpha of image. Then apply alpha on image and get matting image.
+\subsection{ImageReader}
+Read image and then use matting performer to calculate matting image.
+\subsection{ImagePrinter}
+Print the matting result.
+
+\section{Experimental results}
+\section{Conclusion}
+\section{Future work}
+\bibliography{project}
+\bibliographystyle{acl2012}
+
+\end{document}
