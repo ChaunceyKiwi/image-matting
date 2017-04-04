@@ -51,7 +51,6 @@ Image matting is an under-constrained problem. Take Rubin’s vase (Figure 1) as
 
 \subsection{Motivation}
 
-
 \subsection{Related work}
 
 \section{Approach}
@@ -255,6 +254,7 @@ Where $\sum_k$ is a convariance matrix.
 As mentioned in the introduction, user constrained is required to obtain a meaningful alpha matte. We allow users to indicate some background pixels($\alpha = 0$) and some foreground pixels($\alpha = 1$). With S as the user constraint, we solve for:
 $$\alpha = argmin(\alpha^T L \alpha), s.t.\alpha_i = S_i, \forall i \in S $$
 \section{Implementation}
+\begin{figure*}
 \begin{tikzpicture}[node distance=2cm,auto,>=latex']
   \node [coordinate] (start) {};
   \node [obj, below of = start, node distance=1.5cm] (imageReader) {ImageReader};
@@ -276,6 +276,7 @@ $$\alpha = argmin(\alpha^T L \alpha), s.t.\alpha_i = S_i, \forall i \in S $$
   \path[->] (mattingPerformer) edge node {Matting image matrix} (imagePrinter);
   \path[->] (imagePrinter) edge node {Window shows result} (end);
 \end{tikzpicture}
+\end{figure*}
 \subsection{LaplacianCalculator}
 Used to calculate the value of laplacian matrix. 
 \subsection{SparseMatrixEquationSolver}
