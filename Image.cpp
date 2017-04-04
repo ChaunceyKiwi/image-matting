@@ -1,11 +1,3 @@
-//
-//  Image.cpp
-//  temp
-//
-//  Created by Chauncey on 2017-04-03.
-//  Copyright © 2017 Chauncey. All rights reserved.
-//
-
 #include "Image.hpp"
 
 Image::Image(cv::Mat matrix) {
@@ -20,6 +12,10 @@ int Image::getWidth() {
 
 int Image::getHeight() {
   return this->height;
+}
+
+int Image::getImageSize() {
+  return this->height * this->width;
 }
 
 cv::Mat Image::getMatrix() {

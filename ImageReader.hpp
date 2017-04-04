@@ -1,11 +1,3 @@
-//
-//  ImageReader.hpp
-//  temp
-//
-//  Created by Chauncey on 2017-04-03.
-//  Copyright © 2017 Chauncey. All rights reserved.
-//
-
 #ifndef ImageReader_hpp
 #define ImageReader_hpp
 
