@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <opencv2/core/core.hpp>
 
-#include "./temp/Eigen/SparseCore"
-#include "./temp/Eigen/Core"
-#include "./temp/Eigen/Dense"
+#include "./Eigen/SparseCore"
+#include "./Eigen/Core"
+#include "./Eigen/Dense"
 
 typedef Eigen::SparseMatrix<double> SpMat;
 typedef Eigen::Triplet<double> T;
