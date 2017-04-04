@@ -8,6 +8,8 @@
 #include "./Eigen/Core"
 #include "./Eigen/Dense"
 #include "umfpack.h"
+#include "ImageReader.hpp"
+#include "Image.hpp"
 
 using namespace cv;
 using namespace std;
@@ -21,8 +23,8 @@ typedef Triplet<double> T;
 
 // file path
 string path_prefix = "/Users/Chauncey/Workspace/imageMatting";
-string img_name = path_prefix + "/bmp/dandelion/dandelion.bmp";
-string img_m_name = path_prefix + "/bmp/dandelion/dandelion_m.bmp";
+string img_path = path_prefix + "/bmp/kid/kid.bmp";
+string img_m_path = path_prefix + "/bmp/kid/kid_m.bmp";
 
 // global variable
 Mat alpha;
@@ -39,18 +41,18 @@ void getAlphaFromTxt(double* alpha);
 SpMat GetLaplacian(Mat input, Mat consts_map);
 void solveEquation(int *Ap, int *Ai, double* Ax, double *b, int n, double *alphaArray);
 
-int main(void) {
-  // Read the file
-  Mat img, img_m;
-  img = imread(img_name, CV_LOAD_IMAGE_COLOR);
-  img_m = imread(img_m_name, CV_LOAD_IMAGE_COLOR);
+int main(void)
+{
+  ImageReader imageReader;
+  Image img(imageReader.readImage(img_path));
+  Image img_m(imageReader.readImage(img_m_path));
 
-  height = img.size().height;
-  width = img.size().width;
+  height = img.getHeight();
+  width = img.getWidth();
   img_size = height * width;
   
-  Mat imgOutputF = Matting(img, img_m, 0);
-  Mat imgOutputB = Matting(img, img_m, 1);
+  Mat imgOutputF = Matting(img.getMatrix(), img_m.getMatrix(), 0);
+  Mat imgOutputB = Matting(img.getMatrix(), img_m.getMatrix(), 1);
   
   namedWindow("FrontObject", WINDOW_AUTOSIZE); // Create a window for display.
   imshow("FrontObject", imgOutputF); // Show our image inside it.
@@ -296,7 +298,8 @@ SpMat GetLaplacian(Mat input, Mat consts_map){
       
       // Calcualte the part on the right hand side of Kronecker delta
       // which is the matrix with size of 9 by 9, and then put them in one column
-      Mat tvals = (1 + IiMinusMuk * win_var * IjMinusMuk) / neb_size;
+      Mat eyeMatrix = Mat::eye(neb_size, neb_size, CV_64F);
+      Mat tvals = eyeMatrix - (1 + IiMinusMuk * win_var * IjMinusMuk) / neb_size;
       tvals = tvals.reshape(0, neb_size_square);
       
       repe_col = repeat(win_inds.t(), 1, neb_size).reshape(0, neb_size_square);
@@ -325,21 +328,6 @@ SpMat GetLaplacian(Mat input, Mat consts_map){
         vals.at<double>(i, 0)));
   }
   A.setFromTriplets(tripletList.begin(), tripletList.end());
-  
-  SpMat matrixOfOne(img_size, 1);
-  for (int i = 0; i < img_size; i++) {
-    matrixOfOne.insert(i, 0) = 1;
-  }
-  
-  SpMat sumA = A * matrixOfOne;
-  SpMat sparse_mat(img_size, img_size);
-  for(int i = 0; i < img_size; i++) {
-    sparse_mat.coeffRef(i, i) = sumA.coeffRef(i, 0);
-  }
-
-  A = sparse_mat - A;
-  
-  cout << sparse_mat << endl;
   
   return A;
 }
