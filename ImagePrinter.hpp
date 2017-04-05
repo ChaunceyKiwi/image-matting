@@ -9,7 +9,7 @@
 class Image_Printer
 {
 public:
-  void showImage(cv::Mat imageMatrix, std::string title);
+  void printImage(cv::Mat imageMatrix, std::string title);
 };
 
 #endif /* ImagePrinter_hpp */

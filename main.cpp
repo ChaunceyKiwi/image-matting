@@ -29,8 +29,8 @@ int main(void)
   
   // Print matting result
   Image_Printer imagePrinter;
-  imagePrinter.showImage(mattingResultF, "FrontObject");
-  imagePrinter.showImage(mattingResultB, "Background");
+  imagePrinter.printImage(mattingResultF, "Foreground");
+  imagePrinter.printImage(mattingResultB, "Background");
   cv::waitKey(0); // Wait for a keystroke in the window
   
   return 0;
