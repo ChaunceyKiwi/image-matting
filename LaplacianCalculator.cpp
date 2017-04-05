@@ -180,5 +180,6 @@ Eigen::SparseMatrix<double> LaplacianCalculator::getLaplacianMatrix() {
   }
   A.setFromTriplets(tripletList.begin(), tripletList.end());
   
+//  A = A.transpose() * A;
   return A;
 }
