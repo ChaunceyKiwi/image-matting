@@ -37,7 +37,7 @@ cv::Mat AlphaCalculator::getAlpha() {
   }
   SpMat left = A + lambda * D;
   
-  // Calculation of right side((lambda * consts_vals(:))
+  // Calculation of right side (lambda * consts_vals(:))
   cv::Mat consts_vals_in_a_col;
   cv::Mat transpo = consts_vals.t();
   consts_vals_in_a_col = transpo.reshape(1, img_size);

@@ -47,7 +47,12 @@ $$I_{i} = \alpha_{i}F_{i} + (1-\alpha_{i})B_{i}$$
 Where $\alpha$, or $\alpha$ matte, represents the opacity of the foreground image. For pixels on the foreground object, the α value equals to 1. For pixels on the background object, the α value equals 0. Image matting problem is the problem of finding the optimal α matte.\\\\
 Image matting is an under-constrained problem. Take Rubin’s vase (Figure 1) as an example. There are two possible interpretations of the image. The white part of the image can be considered both as the foreground(vase) or background(the wall behind two opposite profiles.)
 
-% \includegraphics[width=3cm]{pic1.png} 
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[width=6cm]{rubins_vase.jpg} 
+    \caption{Rubins Vase}
+  \end{center}
+\end{figure}
 
 \subsection{Motivation}
 
@@ -253,7 +258,26 @@ Where $\sum_k$ is a convariance matrix.
 \subsection{User Constraint}
 As mentioned in the introduction, user constrained is required to obtain a meaningful alpha matte. We allow users to indicate some background pixels($\alpha = 0$) and some foreground pixels($\alpha = 1$). With S as the user constraint, we solve for:
 $$\alpha = argmin(\alpha^T L \alpha), s.t.\alpha_i = S_i, \forall i \in S $$
-\begin{figure*}
+
+\subsection{Alpha Derivation}
+The target of image matting is to find the pixel’s foreground opacity $\alpha$, which can be derived by solution the equation:
+$$\alpha = argmin(\alpha^T L \alpha), s.t.\alpha_i = S_i, \forall i \in S $$
+$$L = \bar{G_k^T}\bar{G_k}$$
+
+Take the derivative of $J(\alpha)$ we get:
+$$J(\alpha)^{'} = (\alpha^T \bar{G_k^T} \bar{G_k} \alpha)^{'} = 0$$
+$$\Rightarrow \bar{G_k} \alpha = 0$$
+
+Denote $const\_map$ as the matrix which is N by 1, whose value is 1 on the scribbled pixel and 0 otherwise. Denote $const\_value$ as the matrix which is N by 1, which is derived from $const\_map .* image(:)$. It is obvious that:
+$$const\_map * \alpha = const\_val$$
+
+Combining the forumlas above together and we get
+$$(\bar{G^k} + \lambda * const\_map)\alpha = \lambda * const\_val$$
+Where $\lambda$ is a heuristic value to make a balance between the user constraint and the smoothness of the image.\\
+
+Since both $\bar{G^k} + \lambda * const\_map$ and $\lambda * const\_val$ can be calculated from image data, the only unknown variable is $\alpha$. Thus by solving this equation we can get value of $\alpha$.
+
+\begin{figure*}[h]
 \begin{center}
 \begin{tikzpicture}[node distance=2cm,auto,>=latex']
   \node [coordinate] (start) {};
@@ -312,7 +336,7 @@ Alpha calculator will firstly use LaplacianCalculator to get laplacian matrix. T
 Matting performer uses AlphaCalculator to get alpha of image. Then apply alpha on image and get matting image.
 
 \subsection{ImagePrinter}
-ImagePrinter receieves the result from MattingPerformer and then print the matting result.
+ImagePrinter receieves the result from MattingPerformer and then print the matting result. The function writeImage use OpenCV to create window and draw matrix of image on it. 
 
 \section{Experimental results}
 \section{Conclusion}
