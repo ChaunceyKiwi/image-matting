@@ -36,9 +36,9 @@ bottom=20mm,
 \begin{document}
 \maketitle
 \begin{abstract}
-In this project, we tried to examine the theoretical basis of A Closed Form Solution to Natural Image Matting. ~\cite{Levin:2006}
+In this project, we tried to examine the theoretical basis of A Closed Form Solution to Natural Image Matting ~\cite{Levin:2006}.
 
-We provided proof to the derivation of the paper’s mathematical model, which was not thoroughly explained. We also implemented the core functions of the paper and pointed out some possibly futural work.
+We provided proof to the derivation of the paper’s mathematical model, which was not thoroughly explained. We also implemented the core functions of the paper and pointed out some possibly future work.
 \end{abstract}
 
 \section{Introduction}
@@ -55,8 +55,22 @@ Image matting is an under-constrained problem. Take Rubin’s vase (Figure 1) as
 \end{figure}
 
 \subsection{Motivation}
+Natural image matting algorithm solves the problem of accurate foreground estimation in image and video. \\
+
+Being an important and useful technique in image and video editing, it is already widely used in many image editing and film production applications. An effective and accurate matting algorithm can save the manpower cost and improve work efficiency to a large extent. \\
+
+At the same time, with the popularity of smart phones, people will take a lot of photos in their daily life, which enhances the demand of image editing. \\
+
+If the matting algorithm can be implemented to run on the mobile device, this feature will very likely to be one of the most important functions of camera.\\ 
+
+Thus, we try to find a matting algorithm which is easy to operate on for user and can be run on mobile device.\\
 
 \subsection{Related work}
+The matting algorihm in ~\cite{Boykov:2001} and ~\cite{Li:2004} translate matting problem into image segmentation problem. By constructing an undirected graph and calculate its minmum cuts, it decides whether a pixel belongs to the background or the foreground. Since a fractional alpha will describe the foreground opacity better, the disadvantage of this algorithm is that the alpha it generated is either 0 or 1. \\
+
+Both of the poisson matting method ~\cite{Sun:2004} and Bayesian matting algorithm ~\cite{Chuang:2001} make use of trimap to perform matting, which labels each pixel as foreground, background, or unknown. Poisson matting method assumes that the matte gradient can be approximated as $\nabla I (F - B)$. However, this assumption is too strong and leads to some local error. \\
+
+The Bayesian matting algorithm perform the most successful matting among the methods described above, which use mixture of oriented Gaussian and then $\alpha, a, b$ are estimated given that distribution. The algorithm performs well when there are little overlap betwen the color distribution on foreground and background, and the area of unknown area is small. Otherwise it might lead to a erroneous matte as well.\\
 
 \section{Approach}
 \subsection{Greyscale Image}
