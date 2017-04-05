@@ -253,8 +253,8 @@ Where $\sum_k$ is a convariance matrix.
 \subsection{User Constraint}
 As mentioned in the introduction, user constrained is required to obtain a meaningful alpha matte. We allow users to indicate some background pixels($\alpha = 0$) and some foreground pixels($\alpha = 1$). With S as the user constraint, we solve for:
 $$\alpha = argmin(\alpha^T L \alpha), s.t.\alpha_i = S_i, \forall i \in S $$
-\section{Implementation}
 \begin{figure*}
+\begin{center}
 \begin{tikzpicture}[node distance=2cm,auto,>=latex']
   \node [coordinate] (start) {};
   \node [obj, below of = start, node distance=1.5cm] (imageReader) {ImageReader};
@@ -263,32 +263,56 @@ $$\alpha = argmin(\alpha^T L \alpha), s.t.\alpha_i = S_i, \forall i \in S $$
   \node [coordinate, below of = imagePrinter, node distance=1.5cm] (end){};
   \node [obj, right of = mattingPerformer, node distance=5.5cm] (alphaCalculator) {AlphaCalculator};
   \node [obj, above right of = alphaCalculator, node distance=3cm] (laplacianCalculator) {LaplacianCalculator};
-  \node [obj, below right of = alphaCalculator, node distance=3cm] (sparseMatrixSolver) {SparseMatrixSolver};
+  \node [obj, below right of = alphaCalculator, node distance=3cm] (sparseMatrixEquationSolver) {SparseMatrixEquationSolver};
 
   \path[->] (start) edge node {File path} (imageReader);
   \path[->] (imageReader) edge node {Image matrix} (mattingPerformer);
   \path[->] (alphaCalculator) edge node {Image matrix} (laplacianCalculator);
   \path[->] (laplacianCalculator) edge node {Laplacian matrix} (alphaCalculator);
-  \path[->] (alphaCalculator) edge node {sparse matrix A, vector B} (sparseMatrixSolver);
-  \path[->] (sparseMatrixSolver) edge node {x = $A \backslash B$ } (alphaCalculator);
-  \path[->] (mattingPerformer) edge node {alpha} (alphaCalculator);
-  \path[->] (alphaCalculator) edge node {Image matrix} (mattingPerformer);
+  \path[->] (alphaCalculator) edge node {sparse matrix A, vector B} (sparseMatrixEquationSolver);
+  \path[->] (sparseMatrixEquationSolver) edge node {x = $A \backslash B$ } (alphaCalculator);
+  \path[->] (mattingPerformer) edge node {Image matrix} (alphaCalculator);
+  \path[->] (alphaCalculator) edge node {alpha} (mattingPerformer);
   \path[->] (mattingPerformer) edge node {Matting image matrix} (imagePrinter);
   \path[->] (imagePrinter) edge node {Window shows result} (end);
 \end{tikzpicture}
+\caption{Matting pipeline}
+\end{center}
 \end{figure*}
-\subsection{LaplacianCalculator}
-Used to calculate the value of laplacian matrix. 
-\subsection{SparseMatrixEquationSolver}
-Used to solved the equation of large scale sparse matrix.
-\subsection{AlphaCalculator}
-Alpha calculator will firstly use Laplacian calculator to get laplacian matrix. Then form the sparse matrix equation and use sparse matrix equation solver to solve it and get alpha.
-\subsection{MattingPerformer}
-Use alpha calculator to get alpha of image. Then apply alpha on image and get matting image.
+
+\section{Implementation}
+We implement the matting algorithm in an OOP programming style. The pipeline of the algorithm is shown in Figure 1. \\
+
+Firstly, ImageReader is given the file paths of original image and scribbled image. Then it send image matrices to the MattingPerformer. \\
+
+Secondly, MattingPerformer gives image matrix to AlphaCalculator. With the help from LaplacianCalculator and SparseMatrixEquationSolver, the AlphaCalculator gets the alpha is return it to the MattingPerformer. Then MattingPerformer performs alpha on the imagel, generates matting image and returns image to the ImagePrinter.\\
+
+Finally, ImagePrinter receives the matrix of matting image. It create a canvas and draw the image on it to show the matting result. 
+
 \subsection{ImageReader}
-Read image and then use matting performer to calculate matting image.
+Given the file path of the image, ImageReader will read the image and return a matrix to represent the image. The function readImage() use OpenCV to read image data and write into a matrix. 
+
+In our implementation, we use ImageReader to read two images: the original image and the original image with user input. The pixels of value 1 in the image represent foreground while the pixels of value 0 prepresent background. 
+
+\subsection{LaplacianCalculator}
+In the section 2, we proved that $J(\alpha) = \alpha^T L \alpha$, where L is an N by N matrix whose (i, j)-th element is:
+$$\sum_{k|(i,j) \in w_k} (\delta_{ij} - \frac{1}{|w_k|}(1 + (I_i - \mu_k)(\sum_k + \frac{\varepsilon}{|w_k|}I_3)^{-1}(I_j - \mu_k)))$$
+
+Given the matrices of image and scribbled image. The task of the LaplacianCalculator is to get such a matrix L. 
+
+\subsection{SparseMatrixEquationSolver}
+SparseMatrixEquationSolver is specially used to solve the equation $Ax=B$, where A is a sparse matrix of N by N and N is the pixel number of an image. \\
+
+Assume an image of 400 by 300 pixels, the number of pixel will be 120,000. And the size of matrix A will be 120,000 by 120,000. To store such a large matrix, we use the sparse matrix library, which is provided by Eigen. Then we use umfpack of suitesparse library to solve the equation of $Ax=B$. \\
+
+\subsection{AlphaCalculator}
+Alpha calculator will firstly use LaplacianCalculator to get laplacian matrix. Then form the sparse matrix equation and use SparseMatrixEquationSolver to solve it and get alpha values.
+
+\subsection{MattingPerformer}
+Matting performer uses AlphaCalculator to get alpha of image. Then apply alpha on image and get matting image.
+
 \subsection{ImagePrinter}
-Print the matting result.
+ImagePrinter receieves the result from MattingPerformer and then print the matting result.
 
 \section{Experimental results}
 \section{Conclusion}
