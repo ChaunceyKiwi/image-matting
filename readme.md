@@ -16,6 +16,8 @@ The functions acting the calculation are from the libraries of openCV, Eigen and
 
 02/05/2016: Code polished and not hard coded anymore.
 
+04/03/2017: Code converted to OOP style.
+
 ## Demo
 ### input:
 ![input](./bmp/result/input.png)
