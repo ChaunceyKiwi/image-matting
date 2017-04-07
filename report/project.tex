@@ -6,7 +6,7 @@
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{multirow}
-\usepackage{graphicx}
+\usepackage{subcaption,graphicx}
 \usepackage{url}
 \usepackage{tikz}
 \usetikzlibrary{arrows}
@@ -302,32 +302,32 @@ Where $\lambda$ is a heuristic value to make a balance between the user constrai
 
 Since both $L + \lambda * const\_map$ and $\lambda * const\_val$ can be calculated from image data, the only unknown variable is $\alpha$. Thus by solving this equation we can get value of $\alpha$.
 
-\begin{figure*}[h]
-\begin{center}
-\begin{tikzpicture}[node distance=2cm,auto,>=latex']
-  \node [coordinate] (start) {};
-  \node [obj, below of = start, node distance=1.5cm] (imageReader) {ImageReader};
-  \node [obj, below of = imageReader] (mattingPerformer) {MattingPerformer};
-  \node [obj, below of  = mattingPerformer] (imagePrinter) {ImagePrinter};
-  \node [coordinate, below of = imagePrinter, node distance=1.5cm] (end){};
-  \node [obj, right of = mattingPerformer, node distance=5.5cm] (alphaCalculator) {AlphaCalculator};
-  \node [obj, above right of = alphaCalculator, node distance=3cm] (laplacianCalculator) {LaplacianCalculator};
-  \node [obj, below right of = alphaCalculator, node distance=3cm] (sparseMatrixEquationSolver) {SparseMatrixEquationSolver};
+% \begin{figure*}[h]
+% \begin{center}
+% \begin{tikzpicture}[node distance=2cm,auto,>=latex']
+%   \node [coordinate] (start) {};
+%   \node [obj, below of = start, node distance=1.5cm] (imageReader) {ImageReader};
+%   \node [obj, below of = imageReader] (mattingPerformer) {MattingPerformer};
+%   \node [obj, below of  = mattingPerformer] (imagePrinter) {ImagePrinter};
+%   \node [coordinate, below of = imagePrinter, node distance=1.5cm] (end){};
+%   \node [obj, right of = mattingPerformer, node distance=5.5cm] (alphaCalculator) {AlphaCalculator};
+%   \node [obj, above right of = alphaCalculator, node distance=3cm] (laplacianCalculator) {LaplacianCalculator};
+%   \node [obj, below right of = alphaCalculator, node distance=3cm] (sparseMatrixEquationSolver) {SparseMatrixEquationSolver};
 
-  \path[->] (start) edge node {File path} (imageReader);
-  \path[->] (imageReader) edge node {Image matrix} (mattingPerformer);
-  \path[->] (alphaCalculator) edge node {Image matrix} (laplacianCalculator);
-  \path[->] (laplacianCalculator) edge node {Laplacian matrix} (alphaCalculator);
-  \path[->] (alphaCalculator) edge node {sparse matrix A, vector B} (sparseMatrixEquationSolver);
-  \path[->] (sparseMatrixEquationSolver) edge node {x = $A \backslash B$ } (alphaCalculator);
-  \path[->] (mattingPerformer) edge node {Image matrix} (alphaCalculator);
-  \path[->] (alphaCalculator) edge node {alpha} (mattingPerformer);
-  \path[->] (mattingPerformer) edge node {Matting image matrix} (imagePrinter);
-  \path[->] (imagePrinter) edge node {Window shows result} (end);
-\end{tikzpicture}
-\caption{Matting pipeline}
-\end{center}
-\end{figure*}
+%   \path[->] (start) edge node {File path} (imageReader);
+%   \path[->] (imageReader) edge node {Image matrix} (mattingPerformer);
+%   \path[->] (alphaCalculator) edge node {Image matrix} (laplacianCalculator);
+%   \path[->] (laplacianCalculator) edge node {Laplacian matrix} (alphaCalculator);
+%   \path[->] (alphaCalculator) edge node {sparse matrix A, vector B} (sparseMatrixEquationSolver);
+%   \path[->] (sparseMatrixEquationSolver) edge node {x = $A \backslash B$ } (alphaCalculator);
+%   \path[->] (mattingPerformer) edge node {Image matrix} (alphaCalculator);
+%   \path[->] (alphaCalculator) edge node {alpha} (mattingPerformer);
+%   \path[->] (mattingPerformer) edge node {Matting image matrix} (imagePrinter);
+%   \path[->] (imagePrinter) edge node {Window shows result} (end);
+% \end{tikzpicture}
+% \caption{Matting pipeline}
+% \end{center}
+% \end{figure*}
 
 \section{Implementation}
 We implement the matting algorithm in an OOP programming style. The pipeline of the algorithm is shown in Figure 1. \\
@@ -363,9 +363,99 @@ Matting performer uses AlphaCalculator to get alpha of image. Then apply alpha o
 \subsection{ImagePrinter}
 ImagePrinter receieves the result from MattingPerformer and then print the matting result. The function writeImage use OpenCV to create window and draw matrix of image on it. 
 
+\newpage
 \section{Experimental results}
+When we have obtained the foreground opacity $\alpha$, we apply $\alpha$ on the input image. We use following formula to get foreground image and backround image:
+$$I_{foreground} = I * \alpha$$
+$$I_{background} = I * (1-\alpha)$$
+
+Figure 2, 3, 4 shows the matting results for different input image. The first image (a) in each figure is the original input image. The second image (b) is the input image with scribble provided by user interaction, where 0 means the pixel belongs to the background and 1 means the pixel belongs to the foreground. The third image is the foreground image of matting result $I_{foreground}$ and the fourth image is the background image of matting result $I_{background}$.\\
+
+From these figure we can find that, with proer user input, the matting algorithm can successfully separate a foreground object from the background. Some fine or fuzzy features, like the hair of the kid in the Figure 2. the featherlike hairs of dandelion in Figure 3, and the feather of peacock in Figure 4. \\
+
+\begin{figure}[h!]
+  \centering
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/kid/kid.jpg}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/kid/kid_m.jpg}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/kid/kid_foreground.jpg}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/kid/kid_background.jpg}
+    \caption{}
+  \end{subfigure}    
+  \caption {Matting result for kid.jpg}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/dandelion/dandelion.jpg}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/dandelion/dandelion_m.jpg}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/dandelion/dandelion_foreground.png}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/dandelion/dandelion_background.png}
+    \caption{}
+  \end{subfigure}    
+  \caption {Matting result for dandelion.jpg}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/peacock/peacock.jpg}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/peacock/peacock_m.jpg}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/peacock/peacock_foreground.png}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/peacock/peacock_background.png}
+    \caption{}
+  \end{subfigure}    
+  \caption {Matting result for peacock.jpg}
+\end{figure}
+
+\newpage
+
 \section{Conclusion}
+The matting algorithm described in the this project can perform image matting properly. However, during the implementation, we find the time complexity is actually quite large. \\
+
 \section{Future work}
+We can use eigen value of Laplacian matrix. \\
+
 \bibliography{project}
 \bibliographystyle{acl2012}
 
