@@ -1,7 +1,7 @@
 #include "MattingPerformer.hpp"
 #include <iostream>
 
-MattingPerformer::MattingPerformer(int lambda, int win_size, double epsilon, double threshold, cv::Mat input, cv::Mat input_m)
+MattingPerformer::MattingPerformer(double lambda, int win_size, double epsilon, double threshold, cv::Mat input, cv::Mat input_m)
 {
   this->lambda = lambda;
   this->win_size = win_size;

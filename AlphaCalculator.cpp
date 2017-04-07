@@ -8,7 +8,7 @@
 
 #include "AlphaCalculator.hpp"
 
-AlphaCalculator::AlphaCalculator(int lambda, int win_size, double epsilon, cv::Mat input, cv::Mat consts_map, cv::Mat consts_vals) {
+AlphaCalculator::AlphaCalculator(double lambda, int win_size, double epsilon, cv::Mat input, cv::Mat consts_map, cv::Mat consts_vals) {
   this->lambda = lambda;
   this->win_size = win_size;
   this->epsilon = epsilon;

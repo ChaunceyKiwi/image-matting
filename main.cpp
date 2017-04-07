@@ -9,7 +9,7 @@ std::string img_path = path_prefix + "/bmp/kid/kid.bmp";
 std::string img_m_path = path_prefix + "/bmp/kid/kid_m.bmp";
 
 // Global variable
-int lambda = 100; // Weight of scribbled piexel obedience
+double lambda = 1; // Weight of scribbled piexel obedience
 int win_size = 1; // The distance between center and border
 double epsilon = 0.00001;
 double thresholdForScribble = 0.001;

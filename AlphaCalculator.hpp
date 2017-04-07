@@ -17,14 +17,14 @@
 class AlphaCalculator {
 private:
   // Input
-  int lambda;
+  double lambda;
   int win_size;
   double epsilon;
   cv::Mat input;
   cv::Mat consts_map;
   cv::Mat consts_vals;
 public:
-  AlphaCalculator(int lambda, int win_size, double epsilon, cv::Mat input, cv::Mat consts_map, cv::Mat consts_vals);
+  AlphaCalculator(double lambda, int win_size, double epsilon, cv::Mat input, cv::Mat consts_map, cv::Mat consts_vals);
   cv::Mat getAlpha();
 };
 

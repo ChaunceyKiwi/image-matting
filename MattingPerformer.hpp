@@ -17,7 +17,7 @@
 class MattingPerformer {
 private:
   // Input
-  int lambda;
+  double lambda;
   int win_size;
   double epsilon;
   double threshold;
@@ -28,7 +28,7 @@ private:
   cv::Mat mattingResultF;
   cv::Mat mattingResultB;
 public:
-  MattingPerformer(int lambda, int win_size, double epsilon, double threshold, cv::Mat input, cv::Mat input_m);
+  MattingPerformer(double lambda, int win_size, double epsilon, double threshold, cv::Mat input, cv::Mat input_m);
   void performMatting();
   cv::Mat getMattingResultF();
   cv::Mat getMattingResultB();
