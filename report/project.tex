@@ -37,9 +37,9 @@ bottom=20mm,
 \begin{document}
 \maketitle
 \begin{abstract}
-In this project, we tried to examine the theoretical basis of A Closed Form Solution to Natural Image Matting ~\cite{Levin:2006}.
+In this project, we examine the theoretical basis of Closed Form matting algorithm~\cite{Levin:2006}.
 
-We provided proof to the derivation of the paper’s mathematical model, which was not thoroughly explained. We also implemented the core functions of the paper and pointed out some possibly future work.
+We provide detailed proof to the derivation of the paper's mathematical model, which is not thoroughly explained. We also implement the core functions of the paper and point out some possibly future work.
 \end{abstract}
 
 \section{Introduction}
@@ -51,7 +51,7 @@ where $\alpha$ represents the opacity of the foreground image. For pixels on the
 
 However, image matting is an under-constrained problem. For each pixel, we need to estimate the foreground, the background and the opacity of the foreground. To solve this severly under-constrained problem, firstly we assume the image conforms to the color line model, which will be discussed in section 2.2. \\
 
-And user interaction is necessary to get a reasonable matte. Take Rubin’s vase (Figure 1) as an example. There are two possible interpretations of the image. The white part of the image can be considered both as the foreground (the vase) or the background (the wall behind two opposite profiles). The detial of user interaction will be discussed in section 2.3. \\
+And user interaction is necessary to perform image matting. Take Rubin’s vase (Figure 1) as an example. There are two possible interpretations of the image. The white part of the image can be considered both as the foreground (the vase) or the background (the wall behind two opposite profiles). The detial of user interaction will be discussed in section 2.3. \\
 
 \begin{figure}[h]
   \begin{center}
@@ -63,22 +63,23 @@ And user interaction is necessary to get a reasonable matte. Take Rubin’s vase
 \subsection{Motivation}
 Natural image matting algorithm solves the problem of accurate foreground estimation in an image. As an important and useful technique, it is already widely used in many area like image editing and film production. An effective and accurate matting algorithm can save the manpower cost and improve work efficiency to a large extent. \\
 
-At the same time, with the popularity of smart phones, people take a lot of photos in their daily life, which enhances the demand of image editing. If a matting algorithm can be implemented to run on the mobile device, this feature will very likely to be one of the most important functions of camera.\\ 
+At the same time, with the popularity of smart phones, nowadays people take a lot of photos in their daily life, which enhances the demand for efficiency image editing algorithm. If a matting algorithm can be implemented efficiently enough to run on the mobile device, the matting feature will very likely to be one of the most important functions in camera.\\ 
 
-Thus, we try to find a matting algorithm which needs user interaction as little as possible and can be run on a mobile device in a reasonable time. \\
+Thus, we try to find a matting algorithm which can accurately separate the foreground object from the backgound. At the same time, it will be better if the algorihms only need a little user interaction and can be run on a mobile device in a reasonable time. \\
+
 
 \subsection{Related work}
-The matting algorihm in ~\cite{Boykov:2001} and ~\cite{Li:2004} translate matting problem into image segmentation problem. By constructing an undirected graph and calculate its minmum cut, it decides whether a pixel belongs to the background or the foreground. Since a fractional alpha will describe the foreground opacity better, the disadvantage of this algorithm is that the alpha it generated is only either 0 or 1. \\
+The matting algorihms in ~\cite{Boykov:2001} and ~\cite{Li:2004} translate matting problem into image segmentation problem. By constructing an undirected graph and calculate its minmum cut, it decides whether a pixel belongs to the background or the foreground. Since a fractional alpha will describe the foreground opacity better, the disadvantage of this kind of algorithm is that the alpha it generates is only either 0 or 1. \\
 
 Both of the poisson matting method ~\cite{Sun:2004} and Bayesian matting algorithm ~\cite{Chuang:2001} make use of trimap to perform matting, which labels each pixel as foreground, background, or unknown. Poisson matting method assumes that the matte gradient can be approximated as $\nabla I (F - B)$. However, this assumption is too strong and leads to some local error. \\
 
-The Bayesian matting algorithm perform the most successful matting among the methods described above, which use mixture of oriented Gaussian and then $\alpha, a, b$ are estimated given that distribution. The algorithm performs well when there are little overlap betwen the color distribution on foreground and background, and the unknown area is small. Otherwise it might lead to a erroneous matte as well. \\
+The Bayesian matting algorithm perform the most successful matting among the methods described above, which uses mixture of oriented Gaussian and then $\alpha, a, b$ are estimated given that distribution. The algorithm performs well when there are little overlap betwen the color distribution on foreground and background, and the unknown area is small. Otherwise it might lead to a erroneous matte as well. \\
 
-In this project, we apply the closed form matting ~\cite{Levin:2006}. The method firstly derives a cost function with color line model, and eliminate $F$ and $B$ from the cost function, leaving $\alpha$ as the only variable. The algorithm calculate the optimal alpha matte that minimizes the cost function. With small amount of user's scribble on natural image as input, high quality $\alpha$ can be generated.
+In this project, we apply the closed form matting ~\cite{Levin:2006}. The method firstly derives a cost function with color line model, and eliminate $F$ and $B$ from the cost function, leaving $\alpha$ as the only variable. The algorithm calculates the optimal alpha matte that minimizes the cost function. With small amount of user's scribbles on natural image as input, high quality $\alpha$ can be generated.
 
 \section{Derivation}
-\subsection{Greyscale Image}
-In the paper, Levin assumes that foreground image and background image are steady inside small local windows (3 by 3 in his case). Therefore he gives the following mathematical assumption:
+\subsection{Grayscale Image}
+In the paper, Levin assumes that foreground image and background image are steady inside small local windows (3 by 3 in his case). Therefore, he gives the following mathematical assumption:
 $$I_i = \alpha_i F_i + (1 - \alpha_i)B_i$$
 $$\Rightarrow \alpha \approx aI_{i} + b, \forall i \in w $$
 $$a = \frac{1}{F-B}, b = \frac{-B}{F-B} $$
@@ -107,7 +108,7 @@ $$ \bar{\alpha_k}^T=
   \begin{bmatrix}
     \alpha_1 & \alpha_2 & \alpha_3 & ... & \alpha_{w_k} & 0 
   \end{bmatrix} $$
-$$J(\alpha, a, b) = \sum_{k}||G_k \begin{bmatrix} a_k \\ b_k\end{bmatrix} - \bar{\alpha_k}||^2$$
+$$\sum_{k}||G_k \begin{bmatrix} a_k \\ b_k\end{bmatrix} - \bar{\alpha_k}||^2$$
 $$= \sum_k||\begin{bmatrix} I_{1} a_k + b_k \\ I_{2} a_k + b_k \\ \vdots \\ I_{|w_k|} a_k + b_k \\ \sqrt{\varepsilon} a_k \end{bmatrix} - 
 \begin{bmatrix}
     \alpha_1 \\ \alpha_2 \\ \alpha_3 \\ \vdots\\ \alpha_{w_k} \\ 0 
@@ -151,7 +152,7 @@ $$ = \begin{bmatrix}
     \sum I_i & |w_k|
   \end{bmatrix}$$
 
-Secondly, with the formula to get the inverse of a 2 by 2 matrix, we can get the inverse of $G_k^TG_k$: 
+Secondly, with the formula to calculate the inverse of a 2 by 2 matrix, we can get $(G_k^TG_k)^{-1}$: 
 $$(G_k^TG_k)^{-1} = \frac{\begin{bmatrix}
     |w_k| & \sum -I_i \\
     \sum -I_i & \sum_{1}^{|w_k|} I_i^2 + \varepsilon
@@ -223,7 +224,7 @@ B_i = \beta^B_{i} B_1 + (1-\beta^B_{i})B_2
 
 Where $\beta_i$ is a constant factor. $F_1$, $B_1$ and $F_2$, $B_2$ are the foreground color and background color of two different points.\\
 
-Using color line model, Levin claims that αi can be represented as:
+Using color line model, Levin claims that $\alpha_i$ can be represented as:
 $$\alpha_i = \sum_{c}a^cI_i^c + b, \forall i \in w$$
 
 \textbf{Proof:} \\
@@ -271,8 +272,6 @@ $$\alpha_i =
 Let $b = a^RB_2^R + a^GB_2^G + a^BB_2^B$, we obtain:
 $$\alpha_i = \sum_{c}a^cI_i^c + b, \forall i \in w$$
 
-By which we can also derive $J(\alpha) = \alpha^T L \alpha$ using the similar derivation in section 2.1. \\
-
 Similar to the cost function of gray­scale images, Levin defines the cost function as:
 $$J(\alpha, a, b) = \sum_{j \in I}(\sum_{i \in w_j}(\alpha_i - \sum_c a_j^c I_i^c-b_j)^2+\varepsilon \sum_{c}{a_j^c}^2)$$
 
@@ -281,110 +280,156 @@ $$\sum_{k|(i,j) \in w_k} (\delta_{ij} - \frac{1}{|w_k|}(1 + (I_i - \mu_k)(\sum_k
 
 where $\sum_k$ is a convariance matrix.
 \subsection{User Constraint}
-As mentioned in the introduction, user constrained is required to obtain a meaningful alpha matte. We allow users to indicate some background pixels($\alpha = 0$) and some foreground pixels($\alpha = 1$). With S as the user constraint, we solve for:
+As is mentioned in the introduction, user constrain is required to obtain a meaningful alpha matte. We allow users to indicate some background pixels($\alpha = 0$) and some foreground pixels($\alpha = 1$). With S as the user constraint, we solve for:
 $$\alpha = argmin(\alpha^T L \alpha), s.t.\alpha_i = s_i, \forall i \in S $$
 
 \subsection{Alpha Derivation}
 The target of image matting is to find the pixel’s foreground opacity $\alpha$, which can be derived by solution the equation:
 $$\alpha = argmin(\alpha^T L \alpha), s.t.\alpha_i = s_i, \forall i \in S $$
 
-The value of $J(\alpha)$ will be minimal when the derivative of $J(\alpha)$ is 0, thus we have:
+The value of $J(\alpha) = \alpha^T L \alpha$ will be minimal when the derivative of $J(\alpha)$ is 0, thus we have:
 $$\frac{\partial J(\alpha)}{\partial \alpha} = 0$$
 $$\Rightarrow \frac{\partial{(\alpha^T L \alpha)}}{\partial \alpha} = 2L\alpha$$
 $$\Rightarrow L\alpha = 0$$
 
-Denote $const\_map$ as the matrix which is N by 1, whose value is 1 on the scribbled pixel and 0 otherwise. Denote $const\_value$ as the matrix which is N by 1, which is derived from $const\_map .* image(:)$. It is obvious that:
+\begin{figure*}[t]
+\begin{center}
+\begin{tikzpicture}[node distance=1.8cm,auto,>=latex']
+  \node [coordinate] (start) {};
+  \node [obj, below of = start, node distance=1.5cm] (imageReader) {ImageReader};
+  \node [obj, below of = imageReader] (mattingPerformer) {MattingPerformer};
+  \node [obj, below of  = mattingPerformer] (imagePrinter) {ImagePrinter};
+  \node [coordinate, below of = imagePrinter, node distance=1.5cm] (end){};
+  \node [obj, right of = mattingPerformer, node distance=5.5cm] (alphaCalculator) {AlphaCalculator};
+  \node [obj, above right of = alphaCalculator, node distance=3cm] (laplacianCalculator) {LaplacianCalculator};
+  \node [obj, below right of = alphaCalculator, node distance=3cm] (sparseMatrixEquationSolver) {SparseMatrixEquationSolver};
+
+  \path[->] (start) edge node {File path} (imageReader);
+  \path[->] (imageReader) edge node {Image matrix} (mattingPerformer);
+  \path[->] (alphaCalculator) edge node {Image matrix} (laplacianCalculator);
+  \path[->] (laplacianCalculator) edge node {Laplacian matrix} (alphaCalculator);
+  \path[->] (alphaCalculator) edge node {sparse matrix A, vector B} (sparseMatrixEquationSolver);
+  \path[->] (sparseMatrixEquationSolver) edge node {x = $A \backslash B$ } (alphaCalculator);
+  \path[->] (mattingPerformer) edge node {Image matrix} (alphaCalculator);
+  \path[->] (alphaCalculator) edge node {alpha} (mattingPerformer);
+  \path[->] (mattingPerformer) edge node {Matting image matrix} (imagePrinter);
+  \path[->] (imagePrinter) edge node {Window shows result} (end);
+\end{tikzpicture}
+\caption{Matting pipeline}
+\end{center}
+\end{figure*}
+\newpage
+
+Denote $const\_map$ as the matrix whose value is 1 on the scribbled pixel and 0 otherwise. Denote $const\_value$ as the matrix which is derived from $const\_map .* I(:)$. It is obvious that:
 $$const\_map * \alpha = const\_val$$
 
-Combining the forumlas above together and we get
+Combine the formulas above together and we get
 $$(L + \lambda * const\_map)\alpha = \lambda * const\_val$$
 Where $\lambda$ is a heuristic value to make a balance between the user constraint and the smoothness of the image.\\
 
 Since both $L + \lambda * const\_map$ and $\lambda * const\_val$ can be calculated from image data, the only unknown variable is $\alpha$. Thus by solving this equation we can get value of $\alpha$.
 
-% \begin{figure*}[h]
-% \begin{center}
-% \begin{tikzpicture}[node distance=2cm,auto,>=latex']
-%   \node [coordinate] (start) {};
-%   \node [obj, below of = start, node distance=1.5cm] (imageReader) {ImageReader};
-%   \node [obj, below of = imageReader] (mattingPerformer) {MattingPerformer};
-%   \node [obj, below of  = mattingPerformer] (imagePrinter) {ImagePrinter};
-%   \node [coordinate, below of = imagePrinter, node distance=1.5cm] (end){};
-%   \node [obj, right of = mattingPerformer, node distance=5.5cm] (alphaCalculator) {AlphaCalculator};
-%   \node [obj, above right of = alphaCalculator, node distance=3cm] (laplacianCalculator) {LaplacianCalculator};
-%   \node [obj, below right of = alphaCalculator, node distance=3cm] (sparseMatrixEquationSolver) {SparseMatrixEquationSolver};
-
-%   \path[->] (start) edge node {File path} (imageReader);
-%   \path[->] (imageReader) edge node {Image matrix} (mattingPerformer);
-%   \path[->] (alphaCalculator) edge node {Image matrix} (laplacianCalculator);
-%   \path[->] (laplacianCalculator) edge node {Laplacian matrix} (alphaCalculator);
-%   \path[->] (alphaCalculator) edge node {sparse matrix A, vector B} (sparseMatrixEquationSolver);
-%   \path[->] (sparseMatrixEquationSolver) edge node {x = $A \backslash B$ } (alphaCalculator);
-%   \path[->] (mattingPerformer) edge node {Image matrix} (alphaCalculator);
-%   \path[->] (alphaCalculator) edge node {alpha} (mattingPerformer);
-%   \path[->] (mattingPerformer) edge node {Matting image matrix} (imagePrinter);
-%   \path[->] (imagePrinter) edge node {Window shows result} (end);
-% \end{tikzpicture}
-% \caption{Matting pipeline}
-% \end{center}
-% \end{figure*}
-
 \section{Implementation}
-We implement the matting algorithm in an OOP programming style. The pipeline of the algorithm is shown in Figure 1. \\
+We implement the matting algorithm in the OOP programming style. The pipeline of the algorithm is shown in Figure 2. \\
 
-Firstly, ImageReader is given the file paths of original image and scribbled image. Then it send image matrices to the MattingPerformer. \\
+Firstly, given the file paths of original image and scribbled image, ImageReader converts image to matrix and send the matrix to the MattingPerformer. \\
 
-Secondly, MattingPerformer gives image matrix to AlphaCalculator. With the help from LaplacianCalculator and SparseMatrixEquationSolver, the AlphaCalculator gets the alpha is return it to the MattingPerformer. Then MattingPerformer performs alpha on the imagel, generates matting image and returns image to the ImagePrinter.\\
+Secondly, MattingPerformer sends image matrix to AlphaCalculator. With the help of LaplacianCalculator and SparseMatrixEquationSolver, AlphaCalculator gets the alpha and returns it to MattingPerformer. Then MattingPerformer applies alpha to the image, generates matting image and returns it to ImagePrinter.\\
 
-Finally, ImagePrinter receives the matrix of matting image. It create a canvas and draw the image on it to show the matting result. 
+Finally, ImagePrinter receives the matrix of matting result. It creates a window and draw the image in it to show the matting result. 
 
 \subsection{ImageReader}
-Given the file path of the image, ImageReader will read the image and return a matrix to represent the image. The function readImage() use OpenCV to read image data and write into a matrix. 
+Given the file path of an image, ImageReader will read the image and return a matrix which represents the image. The function readImage() uses openCV library to read image data and write into a matrix. \\
 
-In our implementation, we use ImageReader to read two images: the original image and the original image with user input. The pixels of value 1 in the image represent foreground while the pixels of value 0 prepresent background. 
+In our implementation, we use ImageReader to read two images: the original image and the image with user input. The pixels of value 1 in the image represent the foreground while the pixels of value 0 represent the background. 
 
 \subsection{LaplacianCalculator}
-In the section 2, we proved that $J(\alpha) = \alpha^T L \alpha$, where L is an N by N matrix whose (i, j)-th element is:
+In the section 2, we proved that $J(\alpha) = \alpha^T L \alpha$, where $L = \bar{G_k}^T\bar{G}$ and (i, j)-th element of $\bar{G}$ is:
 $$\sum_{k|(i,j) \in w_k} (\delta_{ij} - \frac{1}{|w_k|}(1 + (I_i - \mu_k)(\sum_k + \frac{\varepsilon}{|w_k|}I_3)^{-1}(I_j - \mu_k)))$$
 
-Given the matrices of image and scribbled image. The task of the LaplacianCalculator is to get such a matrix L. 
+Given the matrices of image and scribbled image. The task of LaplacianCalculator is to get such a matrix L. 
 
 \subsection{SparseMatrixEquationSolver}
-SparseMatrixEquationSolver is specially used to solve the equation $Ax=B$, where A is a sparse matrix of N by N and N is the pixel number of an image. \\
+SparseMatrixEquationSolver is specially used to solve the equation $Ax=B$, where A is a sparse matrix of N by N where N is the pixel number of an image. \\
 
 Assume an image of 400 by 300 pixels, the number of pixel will be 120,000. And the size of matrix A will be 120,000 by 120,000. To store such a large matrix, we use the sparse matrix library, which is provided by Eigen. Then we use umfpack of suitesparse library to solve the equation of $Ax=B$. \\
 
 \subsection{AlphaCalculator}
-Alpha calculator will firstly use LaplacianCalculator to get laplacian matrix. Then form the sparse matrix equation and use SparseMatrixEquationSolver to solve it and get alpha values.
+Alpha calculator will firstly use LaplacianCalculator to get Laplacian matrix. Then it constructs the sparse matrix equation
+$$(L + \lambda * const\_map)\alpha = \lambda * const\_val$$
+as is discussed in section 2.4, and uses SparseMatrixEquationSolver to solve it and gets alpha values.
 
 \subsection{MattingPerformer}
-Matting performer uses AlphaCalculator to get alpha of image. Then apply alpha on image and get matting image.
+Matting performer uses AlphaCalculator to calculate the matte alpha. Then apply alpha to the original image and get matting image.
 
 \subsection{ImagePrinter}
-ImagePrinter receieves the result from MattingPerformer and then print the matting result. The function writeImage use OpenCV to create window and draw matrix of image on it. 
+ImagePrinter receieves the result from MattingPerformer and then prints the matting result. The function writeImage uses openCV library to create a window and draw the matting results in it. 
 
-\newpage
 \section{Experimental results}
-When we have obtained the foreground opacity $\alpha$, we apply $\alpha$ on the input image. We use following formula to get foreground image and backround image:
-$$I_{foreground} = I * \alpha$$
-$$I_{background} = I * (1-\alpha)$$
 
-Figure 2, 3, 4 shows the matting results for different input image. The first image (a) in each figure is the original input image. The second image (b) is the input image with scribble provided by user interaction, where 0 means the pixel belongs to the background and 1 means the pixel belongs to the foreground. The third image is the foreground image of matting result $I_{foreground}$ and the fourth image is the background image of matting result $I_{background}$.\\
+\subsection{Results with different lambda}
+Since we use the following equation to calculate the alpha, $\lambda$ actually describes to what extent should output satisfy the user's input. 
+$$(L + \lambda * const\_map)\alpha = \lambda * const\_val$$
 
-From these figure we can find that, with proer user input, the matting algorithm can successfully separate a foreground object from the background. Some fine or fuzzy features, like the hair of the kid in the Figure 2. the featherlike hairs of dandelion in Figure 3, and the feather of peacock in Figure 4. \\
+Figure 3 shows the case when the $\lambda$ given is too small. The matting result $\alpha$ on the scribbled pixel is fractional while user input is integer 0 or 1 to indicate it is a background pixel or foreground pixel. Thus the result generated here does not satisfy the user input strictly.
+
+\subsection{Results with differenent epsilon}
+
+In the cost function of $J(\alpha)$, we use $\varepsilon$ for numerical stability:
+$$J(\alpha, a, b) = \sum_{j \in I}(\sum_{i \in w_j}(\alpha_i - a_jI_i-b_j)^2+\varepsilon a_j^2)$$
+
+Since a larger $\varepsilon$ leads to a smaller $a_j$ by the cost function, the larger $\varepsilon$ it is, the smoother the matting result will be. Figure 4 shows the case where the $\varepsilon$ is too small, in which some details are quite sharpe and inaccurate. Figure 5 shows the case when the $\varepsilon$ is too large, which are quite smooth but some details are lost.\\
+
+\subsection{Results with properly chosen epsilon and lambda}
+In the project, we choose the $\lambda$ as 100, and $\varepsilon$ as 0.00001, which turns out to be a proper choice and generates a satisfying result. The matting result in Figure 6 is much better than the results in Figure 3, 4, 5.\\
 
 \begin{figure}[h!]
   \centering
   \begin{subfigure}{0.24\textwidth}
     \centering
-    \includegraphics[width=4cm]{./result/kid/kid.jpg}
+    \includegraphics[width=4cm]{./result/kid/lambda-F.png}
     \caption{}
   \end{subfigure}
   \begin{subfigure}{0.24\textwidth}
     \centering
-    \includegraphics[width=4cm]{./result/kid/kid_m.jpg}
+    \includegraphics[width=4cm]{./result/kid/lambda-B.png}
+    \caption{}
+  \end{subfigure}   
+  \caption {Matting result for kid.jpg if $\lambda$ is too small}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/kid/smallEpsilon-F.png}
     \caption{}
   \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/kid/smallEpsilon-B.png}
+    \caption{}
+  \end{subfigure}   
+  \caption {Matting result for kid.jpg if $\varepsilon$ is too small}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/kid/largeEpsilon-F.png}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=4cm]{./result/kid/largeEpsilon-B.png}
+    \caption{}
+  \end{subfigure}   
+  \caption {Matting result for kid.jpg if $\varepsilon$ is too large}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
   \begin{subfigure}{0.24\textwidth}
     \centering
     \includegraphics[width=4cm]{./result/kid/kid_foreground.jpg}
@@ -394,6 +439,50 @@ From these figure we can find that, with proer user input, the matting algorithm
     \centering
     \includegraphics[width=4cm]{./result/kid/kid_background.jpg}
     \caption{}
+  \end{subfigure}   
+  \caption {Matting result for kid.jpg with properly chosen epsilon and lambda}
+\end{figure}
+
+\clearpage
+
+\subsection{General results}
+When we have obtained the foreground opacity $\alpha$, we apply it to the input image. We use following formula to get foreground image and backround image:
+$$I_{foreground} = I * \alpha$$
+$$I_{background} = I * (1-\alpha)$$
+
+Figure 7, 8, 9 show the matting results for different input image. The first image (a) in each figure is the original input image. The second image (b) is the input image with scribbles provided by user interaction, where 0 means the pixel belongs to the background and 1 means the pixel belongs to the foreground. The third image is the foreground image of matting result $I_{foreground}$ and the fourth image is the background image of matting result $I_{background}$.\\
+
+From these figures we can find that, with a proper user input, the matting algorithm can successfully separate the foreground object from the background. Some fine or fuzzy features, like the hair of the kid in the Figure 7, the featherlike hairs of dandelion in Figure 8, and the feather of peacock in Figure 9 are separated successfully. \\
+
+As for the user interaction, the amount of scribbles needed actually depends on the color distribution of the input image. \\
+
+In the Figure 8, since the foreground is dandelion, which has pure white color, and the background is green, the color distribution of foreground and background are simple. For such kind of image, a few scribbles provided by user will be enough to generate a good result. \\
+
+However, in the Figure7, the case is more complex. The foreground of kid.jpg is the kid in the image, who has a brown hair, white face, yellow and gray clothes. The background is the body of someone else, with green and blue clothes. For such kind of image, scribbles provided by user should cover these different colors as many as possible. Otherwise, the matting result might generate some errors.\\
+
+\newpage
+
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=3.5cm]{./result/kid/kid.jpg}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=3.5cm]{./result/kid/kid_m.jpg}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=3.5cm]{./result/kid/kid_foreground.jpg}
+    \caption{}
+  \end{subfigure}
+  \begin{subfigure}{0.24\textwidth}
+    \centering
+    \includegraphics[width=3.5cm]{./result/kid/kid_background.jpg}
+    \caption{}
   \end{subfigure}    
   \caption {Matting result for kid.jpg}
 \end{figure}
@@ -402,22 +491,22 @@ From these figure we can find that, with proer user input, the matting algorithm
   \centering
   \begin{subfigure}{0.24\textwidth}
     \centering
-    \includegraphics[width=4cm]{./result/dandelion/dandelion.jpg}
+    \includegraphics[width=3.5cm]{./result/dandelion/dandelion.jpg}
     \caption{}
   \end{subfigure}
   \begin{subfigure}{0.24\textwidth}
     \centering
-    \includegraphics[width=4cm]{./result/dandelion/dandelion_m.jpg}
+    \includegraphics[width=3.5cm]{./result/dandelion/dandelion_m.jpg}
     \caption{}
   \end{subfigure}
   \begin{subfigure}{0.24\textwidth}
     \centering
-    \includegraphics[width=4cm]{./result/dandelion/dandelion_foreground.png}
+    \includegraphics[width=3.5cm]{./result/dandelion/dandelion_foreground.png}
     \caption{}
   \end{subfigure}
   \begin{subfigure}{0.24\textwidth}
     \centering
-    \includegraphics[width=4cm]{./result/dandelion/dandelion_background.png}
+    \includegraphics[width=3.5cm]{./result/dandelion/dandelion_background.png}
     \caption{}
   \end{subfigure}    
   \caption {Matting result for dandelion.jpg}
@@ -427,22 +516,22 @@ From these figure we can find that, with proer user input, the matting algorithm
   \centering
   \begin{subfigure}{0.24\textwidth}
     \centering
-    \includegraphics[width=4cm]{./result/peacock/peacock.jpg}
+    \includegraphics[width=3.5cm]{./result/peacock/peacock.jpg}
     \caption{}
   \end{subfigure}
   \begin{subfigure}{0.24\textwidth}
     \centering
-    \includegraphics[width=4cm]{./result/peacock/peacock_m.jpg}
+    \includegraphics[width=3.5cm]{./result/peacock/peacock_m.jpg}
     \caption{}
   \end{subfigure}
   \begin{subfigure}{0.24\textwidth}
     \centering
-    \includegraphics[width=4cm]{./result/peacock/peacock_foreground.png}
+    \includegraphics[width=3.5cm]{./result/peacock/peacock_foreground.png}
     \caption{}
   \end{subfigure}
   \begin{subfigure}{0.24\textwidth}
     \centering
-    \includegraphics[width=4cm]{./result/peacock/peacock_background.png}
+    \includegraphics[width=3.5cm]{./result/peacock/peacock_background.png}
     \caption{}
   \end{subfigure}    
   \caption {Matting result for peacock.jpg}
@@ -451,10 +540,33 @@ From these figure we can find that, with proer user input, the matting algorithm
 \newpage
 
 \section{Conclusion}
-The matting algorithm described in the this project can perform image matting properly. However, during the implementation, we find the time complexity is actually quite large. \\
+\subsection{Why the matting algorithm works}
+Since our assumption is based on the color line model, if we successfully minimize the cost function 
+$$J(\alpha, a, b) = \sum_{j \in I}(\sum_{i \in w_j}(\alpha_i - a_jI_i-b_j)^2+\varepsilon a_j^2)$$
+
+then using the alpha generated, we will get the background image and foreground image which fits color line model as much as possible. \\
+
+Meanwhile, the user constraint specifies the alpha value exactly as 0 or 1. Through the propagation of overlapping windows, most of alpha have a value close to 0 or 1, with a few of them being fractional on the boundary of foreground and background. It is the reason why we can separate the foreground object from the background successfully. \\
+
+\subsection{Accuracy analysis}
+For the image with simple color distribution of foreground and background, a few scribbles provided by user will be sufficient enough to generate accurate matte alpha. However, if the image has a complex color distribution, user's input will be required to cover most of colors, which means more scribbles are needed on several areas rather than just a few dots. \\
+
+With a proper choice of $\lambda$ and $\varepsilon$, given proper user scribbles, the matting algorithm described in the this project can perform image matting accurately. \\
+
+\subsection{Efficiency analysis}
+To solve the equation
+$$(L + \lambda * const\_map)\alpha = \lambda * const\_val$$
+where $L$ is the Laplacian matrix with size of N by N, where N is the number of pixels in the input image. Assume we have an image of 800 by 600, the size of $L$ will be 480000 by 480000. The time cost to solve a matrix equation which contains such a huge matrix will be quite expensive. \\
 
 \section{Future work}
-We can use eigen value of Laplacian matrix. \\
+
+\subsection{Improvement on accuracy}
+Since the matting problem is an under-constrained problem, we need an accurate and useful user input as constraint. Since the Laplacian matrix can be calculated without any user input, ~\cite{Levin:2006} suggests that we can make use of the eigenvector of Laplacian matrix to guide user to perform scribbles drawing. \\
+
+\subsection{Improvment on efficiency}
+As is mentioned in section 5.3, the time cost for current algorithm is quite expensive. Since we want to perform the calculation on mobile device rather than on the computer, efficiency needs improvement. \\
+
+We can reduce the amount of calculation by downsampling the image. For example, we can downsample the original image from 800 by 600 to 160 by 120. And then perform image matting on the image downsampled. However, if we downsample too much, the detail of image will be lost and the matting result will lose accuracy as well. Thus it is a trade-off and we can work on finding the optimal downsampling rate in the future. \\
 
 \bibliography{project}
 \bibliographystyle{acl2012}
