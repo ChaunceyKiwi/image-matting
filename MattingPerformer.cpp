@@ -73,9 +73,6 @@ void MattingPerformer::performMatting() {
   cv::Mat alpha_F = alphaCalculator.getAlpha();
   cv::Mat alpha_B = 1 - alphaCalculator.getAlpha();
   
-  
-  std::cout << alpha_F << std::endl;
-  
   // Apply alpha to image to get image
   for(int i = 0;i < height; i++) {
     for(int j = 0; j < width; j++) {
