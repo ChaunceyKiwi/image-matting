@@ -8,25 +8,30 @@ The code is written by myself but the train of thought is derived from http://ww
 
 The functions acting the calculation are from the libraries of openCV, Eigen and Suitesparse. 
 
-## Note 
-1. Skip eroding.
+## Configuration
+To run the code, you need to install openCV library and suiteSparse toolbox on your local machine.
 
-## Update Log
-02/05/2016: First version code. Still hard coded.
+## Files description
+### main.cpp
+The main function to run the image matting.
 
-02/05/2016: Code polished and not hard coded anymore.
+### ImageReader.cpp
+Given the file path of an image, ImageReader will read the image and return a matrix which represents the image.
 
-04/03/2017: Code converted to OOP style.
+### LaplacianCalculator.cpp
+Given the matrices of image and scribbled image. The task of LaplacianCalculator is to get such a matrix L.
+### SparseMatrixEquationSolver.cpp
+SparseMatrixEquationSolver is specially used to solve the equation Ax = B, where A is a sparse matrix of N by N where N is the pixel number of an image.
 
-## Demo
-### input:
-![input](./bmp/result/input.png)
+### AlphaCalculator.cpp
+Alpha calculator will firstly use LaplacianCalculator to get Laplacian matrix. Then it constructs the sparse matrix equation
 
-### output:
-![output](./bmp/result/output.png)
+### MattingPerformer.cpp
+Matting performer uses AlphaCalculator to calculate the matte alpha. Then apply alpha to the original image and get matting image
 
-### Other output:
-![output1](./bmp/result/kid_output.jpg)
+### ImagePrinter.cppImagePrinter receieves the result from MattingPerformer and then prints the matting result. 
 
-### Other output:
-![output1](./bmp/result/peacock_output.jpg)
+## Reference
+[http://www.alphamatting.com/code.php](http://www.alphamatting.com/code.php)
+
+[http://www.wisdom.weizmann.ac.il/~levina/papers/Matting-Levin-Lischinski-Weiss-CVPR06.pdf](http://www.wisdom.weizmann.ac.il/~levina/papers/Matting-Levin-Lischinski-Weiss-CVPR06.pdf)
