@@ -8,7 +8,7 @@ The code is written by myself but the train of thought is derived from http://ww
 
 The functions acting the calculation are from the libraries of openCV, Eigen and Suitesparse. 
 
-You can read .pdf paper in the /report to get a better and more stright-forward comprehension.
+A .pdf report is also provided in directory /report for the purpose of helping illustrate the idea of this paper.
 
 ## Configuration
 
@@ -23,7 +23,8 @@ The main function to run the image matting.
 Given the file path of an image, ImageReader will read the image and return a matrix which represents the image.
 
 ### LaplacianCalculator.cpp
-Given the matrices of image and scribbled image. The task of LaplacianCalculator is to get such a matrix L.
+Given the matrices of image and scribbled image. The task of LaplacianCalculator is to get such a matrix L.
+
 ### SparseMatrixEquationSolver.cpp
 SparseMatrixEquationSolver is specially used to solve the equation Ax = B, where A is a sparse matrix of N by N where N is the pixel number of an image.
 
@@ -33,7 +34,8 @@ Alpha calculator will firstly use LaplacianCalculator to get Laplacian matrix. T
 ### MattingPerformer.cpp
 Matting performer uses AlphaCalculator to calculate the matte alpha. Then apply alpha to the original image and get matting image
 
-### ImagePrinter.cppImagePrinter receieves the result from MattingPerformer and then prints the matting result. 
+### ImagePrinter.cpp
+ImagePrinter receives the result from MattingPerformer and then prints the matting result. 
 
 ## Reference
 
