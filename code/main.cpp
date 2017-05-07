@@ -4,7 +4,7 @@
 #include "ImagePrinter.hpp"
 
 // File path
-std::string path_prefix = "/Users/Chauncey/Workspace/imageMatting";
+std::string path_prefix = "/imageMatting";
 
 std::string img_path = path_prefix + "/bmp/kid/kid.bmp";
 std::string img_m_path = path_prefix + "/bmp/kid/kid_m.bmp";
