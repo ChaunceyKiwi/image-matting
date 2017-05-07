@@ -8,10 +8,14 @@ The code is written by myself but the train of thought is derived from http://ww
 
 The functions acting the calculation are from the libraries of openCV, Eigen and Suitesparse. 
 
+You can read .pdf paper in the /report to get a better and more stright-forward comprehension.
+
 ## Configuration
+
 To run the code, you need to install openCV library and suiteSparse toolbox on your local machine.
 
-## Files description
+## Files description in /code
+
 ### main.cpp
 The main function to run the image matting.
 
@@ -32,6 +36,7 @@ Matting performer uses AlphaCalculator to calculate the matte alpha. Then apply 
 ### ImagePrinter.cppImagePrinter receieves the result from MattingPerformer and then prints the matting result. 
 
 ## Reference
+
 [http://www.alphamatting.com/code.php](http://www.alphamatting.com/code.php)
 
 [http://www.wisdom.weizmann.ac.il/~levina/papers/Matting-Levin-Lischinski-Weiss-CVPR06.pdf](http://www.wisdom.weizmann.ac.il/~levina/papers/Matting-Levin-Lischinski-Weiss-CVPR06.pdf)
