@@ -1,3 +1,0 @@
-/Users/Chauncey/Desktop/imageMatting/make/CMakeFiles/rebuild_cache.dir
-/Users/Chauncey/Desktop/imageMatting/make/CMakeFiles/edit_cache.dir
-/Users/Chauncey/Desktop/imageMatting/make/CMakeFiles/imageMatting.dir
