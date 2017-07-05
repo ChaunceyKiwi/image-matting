@@ -1,18 +1,23 @@
 ## Natural Image Matting
 
-This algorithm separates the background and foreground with a few scribbles as constriction.
-
-The part of this code tries to realize this algorithm in iOS so we can learn whether Image Matting can be performed well or not in mobile devices.
+This algorithm separates the background and the foreground of an image.
 
 The code is written by myself but the train of thought is derived from http://www.wisdom.weizmann.ac.il/~levina/papers/Matting-Levin-Lischinski-Weiss-CVPR06.pdf. 
 
 The functions acting the calculation are from the libraries of openCV, Eigen and Suitesparse. 
 
-A .pdf report is also provided in directory /report for the purpose of helping illustrate the idea of this paper.
+A .pdf report is also provided in directory ./report for the purpose of illustrating the idea of this paper.
 
-## Configuration
+## How to run
+1. Before running the code, make sure you have already installed openCV library on your local machine.
+2. Enter ./code and type:
 
-To run the code, you need to install openCV library and suiteSparse toolbox on your local machine.
+~~~~
+cd make
+cmake .
+make
+./imageMatting
+~~~~
 
 ## Files description in /code
 
