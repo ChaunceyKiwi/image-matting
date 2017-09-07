@@ -19,7 +19,6 @@ include_directories(../SuiteSparse/include)
 add_executable(imageMatting ${SOURCE_FILES})
 
 find_package( OpenCV REQUIRED )
-set (CMAKE_CXX_FLAGS "-lcurl")
 target_link_libraries( imageMatting ${OpenCV_LIBS} )
 
 file(GLOB LIBRARIES "../SuiteSparse/lib/*.dylib")

@@ -38,7 +38,8 @@ int main(void)
   Image_Printer imagePrinter;
   imagePrinter.printImage(mattingResultF, "Foreground");
   imagePrinter.printImage(mattingResultB, "Background");
-  cv::waitKey(0); // Wait for a keystroke in the window
+
+  printf("Result generated\n");
   
   return 0;
 }
