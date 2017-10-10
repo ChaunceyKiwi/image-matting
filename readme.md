@@ -8,6 +8,15 @@ The functions acting the calculation are from the libraries of openCV, Eigen and
 
 A .pdf report is also provided in directory ./report for the purpose of illustrating the idea of this paper.
 
+## How to install SuiteSpare
+1. Install SuiteSparse.tar.gz from http://faculty.cse.tamu.edu/davis/suitesparse.html, unzip it to the directory /imageMatting/code.
+
+2. Run following instructions to install library:
+~~~
+cd imageMatting/code/SuiteSparse;
+make library;
+~~~
+
 ## How to run
 1. Before running the code, make sure you have already installed openCV library on your local machine.
 2. Enter ./code and type:
