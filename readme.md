@@ -13,7 +13,7 @@ It can be much easier to install OpenCV on macOS with Homebrew.
 2. Run the following commands to install OpenCV.
 ~~~~
 brew update
-brew tap homebrew/homebrew-science
+brew tap homebrew/core
 brew install opencv
 ~~~~
 
